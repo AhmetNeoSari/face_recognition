@@ -279,12 +279,13 @@ def recognize():
         if tracking_bboxes == []:
             print("Waiting for a person...")
 
-
-def main():
+if __name__ == "__main__":
+    
+    
     """Main function to start face tracking and recognition threads."""
     file_name = "./face_tracking/config/config_tracking.yaml"
     config_tracking = load_config(file_name)
-
+    
     # Start tracking thread
     thread_track = threading.Thread(
         target=tracking,
@@ -299,6 +300,3 @@ def main():
     thread_recognize = threading.Thread(target=recognize)
     thread_recognize.start()
 
-
-if __name__ == "__main__":
-    main()
