@@ -1,6 +1,6 @@
 
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 import sys
 
@@ -11,18 +11,17 @@ from basetrack import BaseTrack, TrackState
 @dataclass
 class STrack(BaseTrack):
     
-    tlwh  : np.float64
-    score : int
+    shared_kalman = KalmanFilter()
 
-    def __post_init__(self):
+    def __init__(self, tlwh, score):
         # wait activate
-        self._tlwh = np.asarray(self.tlwh, dtype=np.float64)
+        self._tlwh = np.asarray(tlwh, dtype=np.float64)
         self.kalman_filter = None
         self.mean, self.covariance = None, None
         self.is_activated = False
 
+        self.score = score
         self.tracklet_len = 0
-        shared_kalman = KalmanFilter()
 
     def predict(self):
         mean_state = self.mean.copy()
@@ -95,8 +94,8 @@ class STrack(BaseTrack):
 
         self.score = new_track.score
 
-    @property
     # @jit(nopython=True)
+    @property
     def tlwh(self):
         """Get current position in bounding box format `(top left x, top left y,
         width, height)`.
@@ -108,8 +107,8 @@ class STrack(BaseTrack):
         ret[:2] -= ret[2:] / 2
         return ret
 
-    @property
     # @jit(nopython=True)
+    @property
     def tlbr(self):
         """Convert bounding box to format `(min x, min y, max x, max y)`, i.e.,
         `(top left, bottom right)`.
@@ -118,8 +117,8 @@ class STrack(BaseTrack):
         ret[2:] += ret[:2]
         return ret
 
-    @staticmethod
     # @jit(nopython=True)
+    @staticmethod
     def tlwh_to_xyah(tlwh):
         """Convert bounding box to format `(center x, center y, aspect ratio,
         height)`, where the aspect ratio is `width / height`.
@@ -132,15 +131,15 @@ class STrack(BaseTrack):
     def to_xyah(self):
         return self.tlwh_to_xyah(self.tlwh)
 
-    @staticmethod
     # @jit(nopython=True)
+    @staticmethod
     def tlbr_to_tlwh(tlbr):
         ret = np.asarray(tlbr).copy()
         ret[2:] -= ret[:2]
         return ret
-
-    @staticmethod
+    
     # @jit(nopython=True)
+    @staticmethod
     def tlwh_to_tlbr(tlwh):
         ret = np.asarray(tlwh).copy()
         ret[2:] += ret[:2]
