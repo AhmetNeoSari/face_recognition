@@ -1,4 +1,7 @@
 *.mp4
+*.png
+*.jpeg
+*.jpg
 
 .env
 # *.npz
