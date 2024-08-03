@@ -8,6 +8,7 @@ sys.path.append(BASE_DIR)
 
 import matching
 
+import cv2
 import numpy as np
 from dataclasses import dataclass
 
@@ -19,15 +20,20 @@ from stracker import STrack
 @dataclass
 class BYTETracker(object):
 
-    device  : str
     match_thresh: int
     track_buffer: int
     track_thresh: float
     fp16: bool
     frame_rate : int
-
+    min_box_area: int
+    aspect_ratio_thresh: float
+    ckpt: str
+    fps     : int
+    track_img_size : int
 
     def __post_init__(self):
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tracked_stracks = []  # type: list[STrack]
         self.lost_stracks = []  # type: list[STrack]
         self.removed_stracks = []  # type: list[STrack]
@@ -38,6 +44,107 @@ class BYTETracker(object):
         self.max_time_lost = self.buffer_size
         self.kalman_filter = KalmanFilter()
 
+        self.data_mapping = {
+            "tracking_ids": [],
+            "tracking_bboxes": [],
+        }
+
+    def track(self, outputs, img_info, bboxes, landmarks, id_face_mapping,frame_id):
+
+        tracking_tlwhs = []
+        tracking_ids = []
+        tracking_scores = []
+        tracking_bboxes = []
+
+        if outputs is not None:
+            online_targets = self.update(
+                outputs, [img_info["height"], img_info["width"]], self.track_img_size
+            )
+
+            for i in range(len(online_targets)):
+                t = online_targets[i]
+                tlwh = t.tlwh
+                tid = t.track_id
+                vertical = tlwh[2] / tlwh[3] > self.aspect_ratio_thresh
+                if tlwh[2] * tlwh[3] > self.min_box_area and not vertical:
+                    x1, y1, w, h = tlwh
+                    tracking_bboxes.append([x1, y1, x1 + w, y1 + h])
+                    tracking_tlwhs.append(tlwh)
+                    tracking_ids.append(tid)
+                    tracking_scores.append(t.score)
+
+            # tracking_image = img_info["raw_img"]
+            tracking_image = self.plot_tracking(
+                img_info["raw_img"],
+                tracking_tlwhs,
+                tracking_ids,
+                names=id_face_mapping,
+                frame_id=frame_id + 1,
+            )
+        else:
+            tracking_image = img_info["raw_img"]
+
+        self.data_mapping["tracking_ids"] = tracking_ids
+        self.data_mapping["tracking_bboxes"] = tracking_bboxes
+
+        return tracking_image, self.data_mapping
+
+    def plot_tracking(
+        self, image, tlwhs, obj_ids, scores=None, frame_id=0, ids2=None, names=[]
+    ):
+        im = np.ascontiguousarray(np.copy(image))
+        im_h, im_w = im.shape[:2]
+
+        top_view = np.zeros([im_w, im_w, 3], dtype=np.uint8) + 255
+
+        # text_scale = max(1, image.shape[1] / 1600.)
+        # text_thickness = 2
+        # line_thickness = max(1, int(image.shape[1] / 500.))
+        text_scale = 2
+        text_thickness = 2
+        line_thickness = 3
+
+        radius = max(5, int(im_w / 140.0))
+        cv2.putText(
+            im,
+            "frame: %d fps: %.2f num: %d" % (frame_id, self.fps, len(tlwhs)),
+            (0, int(15 * text_scale)),
+            cv2.FONT_HERSHEY_PLAIN,
+            2,
+            (0, 0, 255),
+            thickness=2,
+        )
+
+        for i, tlwh in enumerate(tlwhs):
+            x1, y1, w, h = tlwh
+            intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
+            obj_id = int(obj_ids[i])
+            id_text = "{}".format(int(obj_id))
+            if (obj_id) in names:
+                id_text = id_text + ": " + names[obj_id]
+            if ids2 is not None:
+                id_text = id_text + ", {}".format(int(ids2[i]))
+            color = self.get_color(abs(obj_id))
+            cv2.rectangle(
+                im, intbox[0:2], intbox[2:4], color=color, thickness=line_thickness
+            )
+            cv2.putText(
+                im,
+                id_text,
+                (intbox[0], intbox[1]),
+                cv2.FONT_HERSHEY_PLAIN,
+                text_scale,
+                (0, 0, 255),
+                thickness=text_thickness,
+            )
+        return im
+
+
+    def get_color(self, idx):
+        idx = idx * 3
+        color = ((37 * idx) % 255, (17 * idx) % 255, (29 * idx) % 255)
+
+        return color
 
     def update(self, output_results, img_info, img_size):
         self.frame_id += 1
