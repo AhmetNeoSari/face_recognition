@@ -10,10 +10,9 @@ import argparse
 
 from face_alignment.alignment import norm_crop
 from face_detection.scrfd.face_detector import Face_Detector
-from face_detection.yolov5_face.detector import Yolov5Face
 from face_recognition.arcface.model import iresnet_inference
 from face_recognition.arcface.utils import compare_encodings, read_features
-from face_tracking.tracker.byte_tracker import BYTETracker
+from face_tracking.byte_tracker import BYTETracker
 import onnxruntime
 
 from dataclasses import dataclass
@@ -235,7 +234,7 @@ if __name__ == "__main__":
     parser.add_argument('--video-source', type=video_source_type, default=0, 
                         help='Video source (0: webcam, use string for file path)')
     args = parser.parse_args()
-    
+
     cap = cv2.VideoCapture(args.video_source)
     face_recognizer = Face_Recognize(**face_recognizer_dict)
     face_detector = Face_Detector(**face_detector_dict)

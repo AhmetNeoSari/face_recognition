@@ -3,7 +3,7 @@ import cv2
 import argparse
 
 from face_detection.scrfd.face_detector import Face_Detector
-from face_tracking.tracker.byte_tracker import BYTETracker
+from face_tracking.byte_tracker import BYTETracker
 from recognize import Face_Recognize
 
 face_detector_dict = {
@@ -23,7 +23,6 @@ face_detector_dict = {
 
 face_recognizer_dict = {
     "is_tracker_use" : True,
-    "video_source" : 0,
     "recognizer_model_name" : "r100",
     "recognizer_model_path" : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/weights/arcface_r100.pth",
     "feature_path" :  "/home/ahmet/workplace/face_recognition/datasets/face_features/feature",

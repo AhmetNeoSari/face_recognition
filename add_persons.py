@@ -9,8 +9,7 @@ import torch
 from torchvision import transforms
 from dataclasses import dataclass
 from typing import List, Tuple
-from face_detection.scrfd.detector import SCRFD
-from face_detection.yolov5_face.detector import Yolov5Face
+from face_detection.scrfd.face_detector import Face_Detector
 from face_recognition.arcface.model import iresnet_inference
 from face_recognition.arcface.utils import read_features
 
@@ -42,8 +41,7 @@ class UpdateDatabase:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Initialize the face detector (Choose one of the detectors)
-        # detector = Yolov5Face(model_file="face_detection/yolov5_face/weights/yolov5n-face.pt")
-        self.detector = SCRFD(model_file=self.detector_model_path)
+        self.detector = Face_Detector(model_file=self.detector_model_path)
         # Initialize the face recognizer
         self.recognizer = iresnet_inference(
             model_name=self.recognizer_model_name, 

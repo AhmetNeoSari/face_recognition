@@ -2,6 +2,7 @@
 *.png
 *.jpeg
 *.jpg
+*.gif
 
 .env
 # *.npz
