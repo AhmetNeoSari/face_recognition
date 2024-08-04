@@ -28,7 +28,6 @@ class BYTETracker(object):
     min_box_area: int
     aspect_ratio_thresh: float
     ckpt: str
-    fps     : int
     track_img_size : int
 
     def __post_init__(self):
@@ -49,7 +48,7 @@ class BYTETracker(object):
             "tracking_bboxes": [],
         }
 
-    def track(self, outputs, img_info, bboxes, landmarks, id_face_mapping,frame_id):
+    def track(self, outputs, img_info, bboxes, fps, landmarks, id_face_mapping,frame_id):
 
         tracking_tlwhs = []
         tracking_ids = []
@@ -80,6 +79,7 @@ class BYTETracker(object):
                 tracking_ids,
                 names=id_face_mapping,
                 frame_id=frame_id + 1,
+                fps=fps
             )
         else:
             tracking_image = img_info["raw_img"]
@@ -90,7 +90,7 @@ class BYTETracker(object):
         return tracking_image, self.data_mapping
 
     def plot_tracking(
-        self, image, tlwhs, obj_ids, scores=None, frame_id=0, ids2=None, names=[]
+        self, image, tlwhs, obj_ids, fps, scores=None, frame_id=0, ids2=None, names=[]
     ):
         im = np.ascontiguousarray(np.copy(image))
         im_h, im_w = im.shape[:2]
@@ -107,7 +107,7 @@ class BYTETracker(object):
         radius = max(5, int(im_w / 140.0))
         cv2.putText(
             im,
-            "frame: %d fps: %.2f num: %d" % (frame_id, self.fps, len(tlwhs)),
+            "frame: %d fps: %.2f num: %d" % (frame_id, fps, len(tlwhs)),
             (0, int(15 * text_scale)),
             cv2.FONT_HERSHEY_PLAIN,
             2,
