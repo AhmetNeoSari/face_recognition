@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import onnxruntime
 import torch
+import argparse
 from dataclasses import dataclass
 
 
@@ -439,38 +440,45 @@ class Face_Detector:
                 cv2.circle(self.image, tuple(key_point), tl + 1, clors[id], -1)
 
 
+face_detector_dict = {
+    "model_file" : "/home/ahmet/workplace/face_recognition/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
+    "taskname" : "detection",
+    "batched" : False,
+    "nms_thresh" : 0.4,
+    "center_cache" : {},
+    "session" : None,
+    "detect_thresh" : 0.5,
+    "detect_input_size" :(128,128),
+    "max_num" : 0,
+    "metric" : "default",
+    "scalefactor" : 1.0 / 128.0
+}
+
+
+def video_source_type(value):
+    try:
+        return int(value)
+    except ValueError:
+        return str(value)
+
+
 if __name__ == "__main__":
-    # Open the camera
-    video_source = 0 #camera or video path
-    cap = cv2.VideoCapture(video_source)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--video-source', type=video_source_type, default=0, 
+                        help='Video source (0: webcam, use string for file path)')
+    parser.add_argument('--show', action='store_true', help='Enable showing the result of tracker')
+    parser.add_argument('--no-show', dest='show', action='store_false', help='Disable showing the result of tracker')
+    parser.set_defaults(show=True)
+    args = parser.parse_args()
 
-    face_detector_dict = {
-        "model_file" : "/home/ahmet/Documents/face-recognition/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
-        "taskname" : "detection",
-        "batched" : False,
-        "nms_thresh" : 0.4,
-        "center_cache" : {},
-        "session" : None,
-        "detect_thresh" : 0.5,
-        "detect_input_size" :(128,128),
-        "max_num" : 0,
-        "metric" : "default",
-        "scalefactor" : 1.0 / 128.0
-    }
-
+    cap = cv2.VideoCapture(args.video_source)
     detector = Face_Detector(**face_detector_dict)
 
     while True:
-        # Capture a frame from the camera
         _, frame = cap.read()
-
         bboxes, landmarks = detector.detect(image=frame)
-
-        detector.draw_bboxes_landmarks(bboxes, landmarks)
-
-        # Show the result in a window
-        cv2.imshow("Face Detection", detector.image)
-
-        # Press 'Q' on the keyboard to exit
-        if cv2.waitKey(25) & 0xFF == ord("q"):
-            break
+        if args.show:
+            detector.draw_bboxes_landmarks(bboxes, landmarks)
+            cv2.imshow("Face Detection", detector.image)
+            if cv2.waitKey(25) & 0xFF == ord("q"):
+                break
