@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import yaml
 from torchvision import transforms
+import argparse
 
 from face_alignment.alignment import norm_crop
 from face_detection.scrfd.face_detector import Face_Detector
@@ -22,7 +23,6 @@ from typing import Optional
 class Face_Recognize:
 
     is_tracker_use : bool
-    video_source : int
     recognizer_model_name : str
     recognizer_model_path : str
     feature_path : str 
@@ -51,7 +51,7 @@ class Face_Recognize:
         """Face recognition in a separate thread."""
         if self.is_tracker_use:
             if data_mapping == None:
-                raise AttributeError 
+                raise ValueError("data_mapping must be provided when is_tracker_use is True")
             
             caption = "UN_KNOWN"
             raw_image = frame
@@ -198,7 +198,6 @@ class Face_Recognize:
 
 face_recognizer_dict = {
     "is_tracker_use" : False,
-    "video_source" : 0,
     "recognizer_model_name" : "r100",
     "recognizer_model_path" : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/weights/arcface_r100.pth",
     "feature_path" :  "/home/ahmet/workplace/face_recognition/datasets/face_features/feature",
@@ -221,22 +220,28 @@ face_detector_dict = {
     "scalefactor" : 1.0 / 128.0,
 }
 
-if __name__ == "__main__":
-    """Main function to start face tracking and recognition threads."""
 
-    cap = cv2.VideoCapture(0)
+def video_source_type(value):
+    try:
+        return int(value)
+    except ValueError:
+        return str(value)
+
+if __name__ == "__main__":
+    """Main function to start recognition threads."""
+
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--video-source', type=video_source_type, default=0, 
+                        help='Video source (0: webcam, use string for file path)')
+    args = parser.parse_args()
+    
+    cap = cv2.VideoCapture(args.video_source)
     face_recognizer = Face_Recognize(**face_recognizer_dict)
     face_detector = Face_Detector(**face_detector_dict)
 
-
-    frame_id = 0
     id_face_mapping = {}
     while True:
         _, frame = cap.read()
-        frame_id += 1
-
         outputs, img_info, bboxes, landmarks = face_detector.detect_tracking(frame)
-
         id_face_mapping ,caption = face_recognizer.recognize(frame ,bboxes, landmarks)
-        
-        print(caption)
