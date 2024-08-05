@@ -11,14 +11,27 @@ import cv2
 import numpy as np
 from dataclasses import dataclass
 
-import utils
-from utils import TrackState, KalmanFilter, STrack
+import face_tracking.tracker_utils as tracker_utils
+from face_tracking.tracker_utils import TrackState, KalmanFilter, STrack
 
 
 @dataclass
 class BYTETracker(object):
+    """
+    BYTETracker class for tracking objects in video frames.
 
-    match_thresh: int
+    Args:
+        match_thresh (float): The threshold for matching tracks.
+        track_buffer (int): Buffer size for tracking objects.
+        track_thresh (float): Threshold for object tracking.
+        fp16 (bool): Whether to use FP16 for computations.
+        frame_rate (int): Frame rate of the video.
+        min_box_area (int): Minimum area of bounding boxes to be considered.
+        aspect_ratio_thresh (float): Threshold for aspect ratio of bounding boxes.
+        ckpt (str): Path to the model checkpoint file.
+        track_img_size (int): Size of the tracking image.
+    """
+    match_thresh: float
     track_buffer: int
     track_thresh: float
     fp16: bool
@@ -29,7 +42,9 @@ class BYTETracker(object):
     track_img_size : int
 
     def __post_init__(self):
-
+        """
+        Initialize the BYTETracker object with necessary settings and parameters.
+        """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tracked_stracks = []  # type: list[STrack]
         self.lost_stracks = []  # type: list[STrack]
@@ -46,8 +61,22 @@ class BYTETracker(object):
             "tracking_bboxes": [],
         }
 
-    def track(self, outputs, img_info, bboxes, fps, landmarks, id_face_mapping,frame_id):
+    def track(self, outputs:torch.Tensor, img_info:dict, fps:float, id_face_mapping:dict, frame_id:int):
+        """
+        Track objects in a frame and update tracking information.
 
+        Args:
+            outputs (torch.Tensor): Detection outputs from the model.
+            img_info (dict): Information about the image, including dimensions.
+            fps (float): Frames per second of the video.
+            id_face_mapping (dict): Mapping of face IDs to names.
+            frame_id (int): ID of the current frame.
+
+        Returns:
+            tuple: A tuple containing the tracked image and data mapping.
+                - tracking_image (np.ndarray): Image with tracking information drawn.
+                - data_mapping (dict): Updated data mapping with tracking IDs and bounding boxes.
+        """
         tracking_tlwhs = []
         tracking_ids = []
         tracking_scores = []
@@ -88,8 +117,23 @@ class BYTETracker(object):
         return tracking_image, self.data_mapping
 
     def plot_tracking(
-        self, image, tlwhs, obj_ids, fps, scores=None, frame_id=0, ids2=None, names=[]
+        self, image, tlwhs, obj_ids, fps:int, frame_id:int=0, ids2=None, names=[]
     ):
+        """
+        Draw tracking information on the image.
+
+        Args:
+            image (np.ndarray): The input image.
+            tlwhs (list): List of bounding boxes in (x, y, width, height) format.
+            obj_ids (list): List of object IDs.
+            fps (int): Frames per second of the video.
+            frame_id (int, optional): ID of the current frame.
+            ids2 (list, optional): Additional IDs for tracking.
+            names (dict, optional): List of names corresponding to object IDs.
+
+        Returns:
+            np.ndarray: The image with tracking information drawn.
+        """
         im = np.ascontiguousarray(np.copy(image))
         im_h, im_w = im.shape[:2]
 
@@ -139,12 +183,32 @@ class BYTETracker(object):
 
 
     def get_color(self, idx):
+        """
+        Generate a color based on the index.
+
+        Args:
+            idx (int): The index for generating color.
+
+        Returns:
+            tuple: The color in RGB format.
+        """
         idx = idx * 3
         color = ((37 * idx) % 255, (17 * idx) % 255, (29 * idx) % 255)
 
         return color
 
     def update(self, output_results, img_info, img_size):
+        """
+        Update the tracking information based on the detection results.
+
+        Args:
+            output_results (torch.Tensor): Detection results from the model.
+            img_info (list): Information about the image dimensions.
+            img_size (tuple): Size of the tracking image.
+
+        Returns:
+            list: Updated list of tracked objects.
+        """
         self.frame_id += 1
         activated_starcks = []
         refind_stracks = []
@@ -191,8 +255,8 @@ class BYTETracker(object):
         strack_pool = self.joint_stracks(tracked_stracks, self.lost_stracks)
         # Predict the current location with KF
         STrack.multi_predict(strack_pool)
-        dists = utils.iou_distance(strack_pool, detections)
-        matches, u_track, u_detection = utils.linear_assignment(
+        dists = tracker_utils.iou_distance(strack_pool, detections)
+        matches, u_track, u_detection = tracker_utils.linear_assignment(
             dists, thresh=self.match_thresh
         )
 
@@ -221,8 +285,8 @@ class BYTETracker(object):
             for i in u_track
             if strack_pool[i].state == TrackState.Tracked
         ]
-        dists = utils.iou_distance(r_tracked_stracks, detections_second)
-        matches, u_track, u_detection_second = utils.linear_assignment(
+        dists = tracker_utils.iou_distance(r_tracked_stracks, detections_second)
+        matches, u_track, u_detection_second = tracker_utils.linear_assignment(
             dists, thresh=0.5
         )
         for itracked, idet in matches:
@@ -243,8 +307,8 @@ class BYTETracker(object):
 
         """Deal with unconfirmed tracks, usually tracks with only one beginning frame"""
         detections = [detections[i] for i in u_detection]
-        dists = utils.iou_distance(unconfirmed, detections)
-        matches, u_unconfirmed, u_detection = utils.linear_assignment(
+        dists = tracker_utils.iou_distance(unconfirmed, detections)
+        matches, u_unconfirmed, u_detection = tracker_utils.linear_assignment(
             dists, thresh=0.7
         )
         for itracked, idet in matches:
@@ -289,6 +353,16 @@ class BYTETracker(object):
 
 
     def joint_stracks(self, tlista, tlistb):
+        """
+        Combine two lists of tracks, avoiding duplicates.
+
+        Args:
+            tlista (list): The first list of tracks.
+            tlistb (list): The second list of tracks.
+
+        Returns:
+            list: Combined list of tracks.
+        """
         exists = {}
         res = []
         for t in tlista:
@@ -303,6 +377,16 @@ class BYTETracker(object):
 
 
     def sub_stracks(self, tlista, tlistb):
+        """
+        Subtract one list of tracks from another.
+
+        Args:
+            tlista (list): The list of tracks to subtract from.
+            tlistb (list): The list of tracks to be subtracted.
+
+        Returns:
+            list: The resulting list of tracks after subtraction.
+        """
         stracks = {}
         for t in tlista:
             stracks[t.track_id] = t
@@ -314,7 +398,19 @@ class BYTETracker(object):
 
 
     def remove_duplicate_stracks(self, stracksa, stracksb):
-        pdist = utils.iou_distance(stracksa, stracksb)
+        """
+        Remove duplicate tracks from two lists.
+
+        Args:
+            stracksa (list): The first list of tracks.
+            stracksb (list): The second list of tracks.
+
+        Returns:
+            tuple: Two lists of tracks after removing duplicates.
+                - list: Tracks from the first list without duplicates.
+                - list: Tracks from the second list without duplicates.
+        """
+        pdist = tracker_utils.iou_distance(stracksa, stracksb)
         pairs = np.where(pdist < 0.15)
         dupa, dupb = list(), list()
         for p, q in zip(*pairs):

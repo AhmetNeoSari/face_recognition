@@ -4,7 +4,7 @@ import argparse
 
 from face_detection.scrfd.face_detector import Face_Detector
 from face_tracking.byte_tracker import BYTETracker
-from recognize import Face_Recognize
+from face_recognition.arcface.recognize import Face_Recognize
 
 face_detector_dict = {
     "model_file"  : "/home/ahmet/workplace/face_recognition/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
@@ -25,7 +25,7 @@ face_recognizer_dict = {
     "is_tracker_use" : True,
     "recognizer_model_name" : "r100",
     "recognizer_model_path" : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/weights/arcface_r100.pth",
-    "feature_path" :  "/home/ahmet/workplace/face_recognition/datasets/face_features/feature",
+    "feature_path" :  "/home/ahmet/workplace/face_recognition/face_recognition/arcface/datasets/face_features/feature",
     "mapping_score_thresh" : 0.9,
     "recognition_score_thresh" : 0.25
 }
@@ -60,7 +60,7 @@ def main(args):
         frame_id += 1
 
         outputs, img_info, bboxes, landmarks = face_detector.detect_tracking(frame)
-        tracking_image, data_mapping = face_tracker.track(outputs, img_info, bboxes, fps, landmarks, id_face_mapping, frame_id)
+        tracking_image, data_mapping = face_tracker.track(outputs, img_info, fps, id_face_mapping, frame_id)
         id_face_mapping,caption = face_recognizer.recognize(img_info["raw_img"] ,bboxes, landmarks, data_mapping)
 
         end_timer = time.time()
