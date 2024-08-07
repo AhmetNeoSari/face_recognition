@@ -267,7 +267,7 @@ class UpdateDatabase:
         if features is None:
             warnings.warn("No found Features data")
             return False
-     
+        
         images_name, images_emb = features
         indices_to_remove = [i for i, name in enumerate(images_name) if name == person_name]
 
