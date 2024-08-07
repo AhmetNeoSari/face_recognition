@@ -10,8 +10,7 @@ from torchvision import transforms
 from dataclasses import dataclass
 from typing import List, Tuple
 from face_detection.scrfd.face_detector import Face_Detector
-from face_recognition.arcface.model import iresnet_inference
-from face_recognition.arcface.rocognizer_utils import read_features
+from face_recognition.arcface.rocognizer_utils import read_features, iresnet_inference
 
 @dataclass
 class UpdateDatabase:

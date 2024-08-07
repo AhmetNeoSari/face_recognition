@@ -5,6 +5,7 @@ from torchvision import transforms
 import argparse
 import sys
 import os.path
+from dataclasses import dataclass
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,8 +16,7 @@ sys.path.append(current_dir)
       
 from face_recognition.arcface.rocognizer_utils import norm_crop, compare_encodings, read_features, iresnet_inference
 from face_detection.scrfd.face_detector import Face_Detector
-from dataclasses import dataclass
-
+from configs.config import Config
 
 @dataclass
 class Face_Recognize:
@@ -209,30 +209,6 @@ class Face_Recognize:
         return iou
 
 
-face_recognizer_dict = {
-    "is_tracker_use" : False,
-    "recognizer_model_name" : "r100",
-    "recognizer_model_path" : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/weights/arcface_r100.pth",
-    "feature_path" :  "/home/ahmet/workplace/face_recognition/face_recognition/arcface/datasets/face_features/feature",
-    "mapping_score_thresh" : 0.9,
-    "recognition_score_thresh" : 0.25
-}
-
-
-face_detector_dict = {
-    "model_file"  : "/home/ahmet/workplace/face_recognition/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
-    "taskname"    : "detection",
-    "batched"     : False,
-    "nms_thresh"  : 0.4,
-    "center_cache": {},
-    "session"     : None,
-    "detect_thresh" : 0.5,
-    "detect_input_size" : (128,128),
-    "max_num"     : 0,
-    "metric"      : "default",
-    "scalefactor" : 1.0 / 128.0,
-}
-
 
 def video_source_type(value):
     try:
@@ -250,8 +226,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     cap = cv2.VideoCapture(args.video_source)
-    face_recognizer = Face_Recognize(**face_recognizer_dict)
-    face_detector = Face_Detector(**face_detector_dict)
+
+    config = Config()
+    attributes = config.load()
+    face_recognizer = Face_Recognize(**attributes["recognition"])
+    face_detector = Face_Detector(**attributes["detection"])
 
     id_face_mapping = {}
     while True:

@@ -11,8 +11,8 @@ import cv2
 import numpy as np
 from dataclasses import dataclass
 
-import face_tracking.tracker_utils as tracker_utils
-from face_tracking.tracker_utils import TrackState, KalmanFilter, STrack
+import tracker_utils
+from tracker_utils import TrackState, KalmanFilter, STrack
 
 
 @dataclass

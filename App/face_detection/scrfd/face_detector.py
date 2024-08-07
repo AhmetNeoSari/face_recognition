@@ -1,5 +1,6 @@
 import os.path 
 import time
+import sys
 
 import cv2
 import numpy as np
@@ -8,6 +9,13 @@ import torch
 import argparse
 from dataclasses import dataclass
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+app_dir = os.path.dirname(parent_dir)
+sys.path.append(app_dir)
+sys.path.append(current_dir)
+
+from configs.config import Config
 
 @dataclass
 class Face_Detector:
@@ -53,7 +61,7 @@ class Face_Detector:
         and initializes various variables needed for the model.
         """
 
-        if self.session is None:
+        if self.session == "":
             assert self.model_file is not None
             assert os.path.exists(self.model_file)
             assert 'CUDAExecutionProvider' in onnxruntime.get_available_providers()
@@ -440,21 +448,6 @@ class Face_Detector:
                 cv2.circle(self.image, tuple(key_point), tl + 1, clors[id], -1)
 
 
-face_detector_dict = {
-    "model_file" : "/home/ahmet/workplace/face_recognition/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
-    "taskname" : "detection",
-    "batched" : False,
-    "nms_thresh" : 0.4,
-    "center_cache" : {},
-    "session" : None,
-    "detect_thresh" : 0.5,
-    "detect_input_size" :(128,128),
-    "max_num" : 0,
-    "metric" : "default",
-    "scalefactor" : 1.0 / 128.0
-}
-
-
 def video_source_type(value):
     try:
         return int(value)
@@ -471,8 +464,11 @@ if __name__ == "__main__":
     parser.set_defaults(show=True)
     args = parser.parse_args()
 
+    config = Config()
+    attributes = config.load()
+
     cap = cv2.VideoCapture(args.video_source)
-    detector = Face_Detector(**face_detector_dict)
+    detector = Face_Detector(**attributes["detection"])
 
     while True:
         _, frame = cap.read()
