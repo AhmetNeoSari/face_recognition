@@ -60,7 +60,7 @@ def main(args):
         frame_id += 1
 
         outputs, img_info, bboxes, landmarks = face_detector.detect_tracking(frame)
-        tracking_image, data_mapping = face_tracker.track(outputs, img_info, fps, id_face_mapping, frame_id)
+        tracking_image, data_mapping = face_tracker.track(outputs, img_info, fps, id_face_mapping)
         id_face_mapping,caption = face_recognizer.recognize(img_info["raw_img"] ,bboxes, landmarks, data_mapping)
 
         end_timer = time.time()

@@ -12,9 +12,6 @@ parent_dir = os.path.dirname(current_dir)
 root_dir = os.path.dirname(parent_dir)
 sys.path.append(root_dir)
 sys.path.append(current_dir)
-
-print("\n")
-print("root dir", root_dir)
       
 from face_recognition.arcface.rocognizer_utils import norm_crop, compare_encodings, read_features, iresnet_inference
 from face_detection.scrfd.face_detector import Face_Detector
@@ -41,11 +38,6 @@ class Face_Recognize:
             path=self.recognizer_model_path, 
             device=self.device
         )
-
-        # Load precomputed face features and names
-        print("\n")
-        print(self.feature_path)
-        print("\n")
 
         self.images_names, self.images_embs = read_features(feature_path = self.feature_path)
 

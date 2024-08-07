@@ -61,7 +61,7 @@ class BYTETracker(object):
             "tracking_bboxes": [],
         }
 
-    def track(self, outputs:torch.Tensor, img_info:dict, fps:float, id_face_mapping:dict, frame_id:int):
+    def track(self, outputs:torch.Tensor, img_info:dict, fps:float, id_face_mapping:dict):
         """
         Track objects in a frame and update tracking information.
 
@@ -70,7 +70,6 @@ class BYTETracker(object):
             img_info (dict): Information about the image, including dimensions.
             fps (float): Frames per second of the video.
             id_face_mapping (dict): Mapping of face IDs to names.
-            frame_id (int): ID of the current frame.
 
         Returns:
             tuple: A tuple containing the tracked image and data mapping.
@@ -105,7 +104,7 @@ class BYTETracker(object):
                 tracking_tlwhs,
                 tracking_ids,
                 names=id_face_mapping,
-                frame_id=frame_id + 1,
+                frame_id=self.frame_id,
                 fps=fps
             )
         else:
