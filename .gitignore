@@ -1,8 +1,6 @@
 *.mp4
-*.png
 *.jpeg
 *.jpg
-*.gif
 
 .env
 # *.npz
