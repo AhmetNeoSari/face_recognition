@@ -372,19 +372,7 @@ class Face_Detector:
         img_info["width"] = width
         img_info["raw_img"] = image
 
-
-        im_ratio = float(image.shape[0]) / image.shape[1]
-        model_ratio = float(self.detect_input_size[1]) / self.detect_input_size[0]
-        if im_ratio > model_ratio:
-            new_height = self.detect_input_size[1]
-            new_width = int(new_height / im_ratio)
-        else:
-            new_width = self.detect_input_size[0]
-            new_height = int(new_width * im_ratio)
-        det_scale = float(new_height) / image.shape[0]
-        resized_img = cv2.resize(image, (new_width, new_height))
-        det_img = np.zeros((self.detect_input_size[1], self.detect_input_size[0], 3), dtype=np.uint8)
-        det_img[:new_height, :new_width, :] = resized_img
+        det_img, det_scale = self.preprocess_image()
 
         scores_list, bboxes_list, kpss_list = self.forward(det_img)
 
