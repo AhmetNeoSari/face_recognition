@@ -1,11 +1,17 @@
 import time
 import cv2
 import argparse
+import sys
+import os
 
-from App.face_detection.scrfd.face_detector import Face_Detector
-from App.face_tracking.byte_tracker import BYTETracker
-from App.face_recognition.arcface.recognize import Face_Recognize
-from App.configs.config import Config
+# print("\n")
+# print(os.path.dirname(os.path.abspath(__file__)))
+# print("\n")
+
+from app.face_detection.scrfd.face_detector import Face_Detector
+from app.face_tracking.byte_tracker import BYTETracker
+from app.face_recognition.arcface.recognize import Face_Recognize
+from app.config import Config
 
 
 def video_source_type(value):
@@ -16,7 +22,7 @@ def video_source_type(value):
 
 def main(args):
     cap = cv2.VideoCapture(args.video_source)
-    config = Config("/home/ahmet/workplace/face_recognition/App/configs")
+    config = Config("configs")
     attributes = config.load(args.env)
 
     face_recognizer = Face_Recognize(**attributes["recognition"])
@@ -58,7 +64,6 @@ if __name__ == "__main__":
     parser.add_argument('--no-show', dest='show', action='store_false', help='Disable showing the result of tracker')
     parser.add_argument('--env', type=str, required=True, help='Specify the environment (local or prod or etc.)')
 
-    
     parser.set_defaults(video_source=0 ,show=True)
     args = parser.parse_args()
 

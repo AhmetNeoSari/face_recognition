@@ -15,7 +15,7 @@ app_dir = os.path.dirname(parent_dir)
 sys.path.append(app_dir)
 sys.path.append(current_dir)
 
-from configs.config import Config
+from config import Config
 
 @dataclass
 class Face_Detector:
@@ -164,7 +164,7 @@ class Face_Detector:
         return np.stack([x1, y1, x2, y2], axis=-1)
 
 
-    def forward(self, img):
+    def forward(self, img:np.ndarray):
         scores_list = []
         bboxes_list = []
         kpss_list = []
@@ -457,11 +457,11 @@ def video_source_type(value):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--video-source', type=video_source_type, default=0, 
+    parser.add_argument('--video-source', type=video_source_type, 
                         help='Video source (0: webcam, use string for file path)')
     parser.add_argument('--show', action='store_true', help='Enable showing the result of tracker')
     parser.add_argument('--no-show', dest='show', action='store_false', help='Disable showing the result of tracker')
-    parser.set_defaults(show=True)
+    parser.set_defaults(video_source=0 ,show=True)
     args = parser.parse_args()
 
     config = Config()

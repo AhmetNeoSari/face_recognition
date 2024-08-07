@@ -7,16 +7,15 @@ import sys
 import os.path
 from dataclasses import dataclass
 
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 root_dir = os.path.dirname(parent_dir)
 sys.path.append(root_dir)
 sys.path.append(current_dir)
-      
-from face_recognition.arcface.rocognizer_utils import norm_crop, compare_encodings, read_features, iresnet_inference
+
+from rocognizer_utils import norm_crop, compare_encodings, read_features, iresnet_inference
 from face_detection.scrfd.face_detector import Face_Detector
-from configs.config import Config
+from config import Config
 
 @dataclass
 class Face_Recognize:
@@ -208,6 +207,29 @@ class Face_Recognize:
 
         return iou
 
+face_recognizer_dict = {
+    "is_tracker_use" : False,
+    "recognizer_model_name" : "r100",
+    "recognizer_model_path" : "weights/arcface_r100.pth",
+    "feature_path" :  "datasets/face_features/feature",
+    "mapping_score_thresh" : 0.9,
+    "recognition_score_thresh" : 0.25
+}
+
+
+face_detector_dict = {
+    "model_file"  : "../../face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
+    "taskname"    : "detection",
+    "batched"     : False,
+    "nms_thresh"  : 0.4,
+    "center_cache": {},
+    "session"     : "",
+    "detect_thresh" : 0.5,
+    "detect_input_size" : (128,128),
+    "max_num"     : 0,
+    "metric"      : "default",
+    "scalefactor" : 1.0 / 128.0,
+}
 
 
 def video_source_type(value):
@@ -217,8 +239,7 @@ def video_source_type(value):
         return str(value)
 
 if __name__ == "__main__":
-    """Main function to start recognition threads."""
-
+    """Main function to start recognition threads."""      
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--video-source', type=video_source_type, default=0, 
@@ -227,10 +248,8 @@ if __name__ == "__main__":
 
     cap = cv2.VideoCapture(args.video_source)
 
-    config = Config()
-    attributes = config.load()
-    face_recognizer = Face_Recognize(**attributes["recognition"])
-    face_detector = Face_Detector(**attributes["detection"])
+    face_recognizer = Face_Recognize(**face_recognizer_dict)
+    face_detector = Face_Detector(**face_detector_dict)
 
     id_face_mapping = {}
     while True:
