@@ -21,8 +21,6 @@ This project is a face recognition system that performs tasks such as face detec
   - [Face Detection](#face-detection)
   - [Face Recognition](#face-recognition)
   - [Face Tracking](#face-tracking)
-  - [Matching Algorithm](#matching-algorithm)
-- [Reference](#reference)
 
 ## Project Structure
 
