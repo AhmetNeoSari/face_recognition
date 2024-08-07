@@ -88,6 +88,8 @@ def read_features(feature_path):
 
 
 def compare_encodings(encoding, encodings):
+    if encodings.size == 0:
+        raise ValueError("No embeddings to compare with.")
     sims = np.dot(encodings, encoding.T)
     pare_index = np.argmax(sims)
     score = sims[pare_index]
@@ -324,7 +326,7 @@ def iresnet_inference(model_name, path, device="cuda"):
     else:
         raise ValueError()
 
-    weight = torch.load(path, map_location=device)
+    weight = torch.load(path, map_location=device, weights_only=True)
 
     model.load_state_dict(weight)
     model.to(device)
