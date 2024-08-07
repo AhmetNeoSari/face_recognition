@@ -1,16 +1,25 @@
 import os
 import shutil
 import warnings 
-
+import sys
 
 import cv2
 import numpy as np
 import torch
 from torchvision import transforms
 from dataclasses import dataclass
-from typing import List, Tuple
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(parent_dir)
+sys.path.append(root_dir)
+sys.path.append(current_dir)
+
+print(current_dir)
+
 from face_detection.scrfd.face_detector import Face_Detector
-from face_recognition.arcface.rocognizer_utils import read_features, iresnet_inference
+from face_recognition.arcface.rocognizer_utils import iresnet_inference
 
 @dataclass
 class UpdateDatabase:
@@ -28,19 +37,13 @@ class UpdateDatabase:
     add_persons_dir : str 
     faces_save_dir  : str 
     features_path   : str
-    
-    detector_model_path   : str
     recognizer_model_name : str
     recognizer_model_path : str
-
     debug : bool
     
-
     def __post_init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Initialize the face detector (Choose one of the detectors)
-        self.detector = Face_Detector(model_file=self.detector_model_path)
         # Initialize the face recognizer
         self.recognizer = iresnet_inference(
             model_name=self.recognizer_model_name, 
@@ -135,7 +138,7 @@ class UpdateDatabase:
         """
 
         # Read existing features if available
-        features = read_features(self.features_path)
+        features = self.read_features()
         if features is not None:
             # Unpack existing features
             old_images_name, old_images_emb = features
@@ -160,7 +163,7 @@ class UpdateDatabase:
             shutil.move(dir_to_move, self.backup_dir, copy_function=shutil.copytree)
 
 
-    def add_persons(self):
+    def add_persons(self,detector):
         """
         Add a new person to the face recognition database.
 
@@ -171,6 +174,7 @@ class UpdateDatabase:
             features_path   (str): Path to save face features.
         """
         # Initialize lists to store names and features of added images
+        self.detector = detector
         all_images_name = np.array([], dtype=str)
         all_images_emb = np.empty((0, 512))  # assuming embeddings have size 512
 
@@ -259,20 +263,17 @@ class UpdateDatabase:
 
         except Exception as e:
             warnings.warn(f"An error occurred while deleting directories: {e}")
-            return False
 
         # Load existing features
-        features = read_features(self.features_path)
+        features = self.read_features()
         if features is None:
             warnings.warn("No found Features data")
-            return False
         
         images_name, images_emb = features
         indices_to_remove = [i for i, name in enumerate(images_name) if name == person_name]
 
         if len(indices_to_remove) == 0:
             warnings.warn(f"Person {person_first_name} {person_last_name} doesn't found in features")
-            return False
 
         # Remove the person's features from the database
         images_name = np.delete(images_name, indices_to_remove)
@@ -283,6 +284,17 @@ class UpdateDatabase:
         if self.debug:
             print(f"Person {person_first_name} {person_last_name} deleted from database and features")
 
+
+    def read_features(self):
+        try:
+            data = np.load(self.features_path + ".npz", allow_pickle=True)
+            images_name = data["images_name"]
+            images_emb = data["images_emb"]
+
+            return images_name, images_emb
+        except:
+            return None
+        
 
     def count_persons_and_photos(self):
         """
@@ -306,27 +318,34 @@ class UpdateDatabase:
         total_persons = len(person_photo_counts)
         return total_persons, person_photo_counts
     
-    
-def main():
-    my_dict = {
-        "backup_dir"       : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/datasets/backup",
-        "add_persons_dir"  : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/datasets/new_persons",
-        "faces_save_dir"   : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/datasets/data",
-        "features_path"    : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/datasets/face_features",
-        "detector_model_path"   : "/home/ahmet/workplace/face_recognition/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
-        "recognizer_model_name" : "r100",
-        "recognizer_model_path" : "/home/ahmet/workplace/face_recognition/face_recognition/arcface/weights/arcface_r100.pth",
-        "debug" : False
-    }
 
-    obj = UpdateDatabase(**my_dict)
-    # obj.delete_person("aa","bb")
-    # obj.fetch_images("aa","bb","/home/ahmet/Pictures/foto",)
-    # obj.add_persons()
-    # obj.delete_person("Ahmet","Sari")
-    
-    total_person, persons_number = obj.count_persons_and_photos()
+my_dict = {
+    "backup_dir"       : "datasets/backup",
+    "add_persons_dir"  : "datasets/new_persons",
+    "faces_save_dir"   : "datasets/data",
+    "features_path"    : "datasets/face_features/feature",
+    "recognizer_model_name" : "r100",
+    "recognizer_model_path" : "weights/arcface_r100.pth",
+    "debug" : False
+}
 
+detector_dict = {
+    "model_file" : "../../face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
+    "taskname" : "detection",
+    "batched" : False,
+    "nms_thresh" : 0.4,
+    "center_cache" : {},
+    "session" : "",
+    "detect_thresh" : 0.5,
+    "detect_input_size" : [128, 128],
+    "max_num" : 0,
+    "metric" : "default",
+    "scalefactor" : 0.0078125 #1.0 / 128.0
+}
 
 if __name__ == "__main__":
-    main()
+    detector = Face_Detector(**detector_dict)
+    obj = UpdateDatabase(**my_dict)
+    total_persons, person_photo_counts = obj.count_persons_and_photos()
+    print(total_persons)
+    print(person_photo_counts)
