@@ -1,0 +1,31 @@
+[detection]
+model_file = "/home/ahmet/workplace/face_recognition/App/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx"
+taskname = "detection"
+batched = false
+nms_thresh = 0.4
+center_cache = {}
+session = ""
+detect_thresh = 0.5
+detect_input_size = [128, 128]
+max_num = 0
+metric = "default"
+scalefactor = 0.0078125 #1.0 / 128.0
+
+[recognition]
+is_tracker_use = true
+recognizer_model_name = "r100"
+recognizer_model_path = "/home/ahmet/workplace/face_recognition/App/face_recognition/arcface/weights/arcface_r100.pth"
+feature_path = "/home/ahmet/workplace/face_recognition/App/face_recognition/arcface/datasets/face_features/feature"
+mapping_score_thresh = 0.9
+recognition_score_thresh = 0.25
+
+[tracker]
+match_thresh = 0.8
+track_buffer = 30
+track_thresh = 0.5
+fp16 = true
+frame_rate = 30
+min_box_area = 10
+aspect_ratio_thresh = 1.6
+ckpt = "bytetrack_s_mot17.pth.tar"
+track_img_size = [128, 128]
