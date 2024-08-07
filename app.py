@@ -1,12 +1,6 @@
 import time
 import cv2
 import argparse
-import sys
-import os
-
-# print("\n")
-# print(os.path.dirname(os.path.abspath(__file__)))
-# print("\n")
 
 from app.face_detection.scrfd.face_detector import Face_Detector
 from app.face_tracking.byte_tracker import BYTETracker
