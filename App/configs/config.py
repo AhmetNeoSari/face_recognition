@@ -3,21 +3,15 @@ import toml
 
 @dataclass
 class Config:
-    config_path: str = field(default="/home/ahmet/workplace/face_recognition/App/configs/config.toml")
+    config_path: str = field(default="configs")
 
-    def load(self):
+    def load(self,):
         with open(self.config_path, 'r') as file:
             config_data = toml.load(file)
         
-        combined_config = {
-            "detection": config_data['detection'],
-            "recognition": config_data['recognition'],
-            "tracker": config_data['tracker']
-        }
-        
-        return combined_config
+        return config_data
     
 if __name__ == "__main__":
-    config = Config()
+    config = Config("config.local.toml")
     loaded_config = config.load()
     print(loaded_config["tracker"])

@@ -16,8 +16,8 @@ def video_source_type(value):
 
 def main(args):
     cap = cv2.VideoCapture(args.video_source)
-    config = Config()
-    attributes = config.load()
+    config = Config("/home/ahmet/workplace/face_recognition/App/configs")
+    attributes = config.load(args.env)
 
     face_recognizer = Face_Recognize(**attributes["recognition"])
     face_detector = Face_Detector(**attributes["detection"])
@@ -56,6 +56,9 @@ if __name__ == "__main__":
                     help='Video source (0: webcam, use string for file path)')
     parser.add_argument('--show', action='store_true', help='Enable showing the result of tracker')
     parser.add_argument('--no-show', dest='show', action='store_false', help='Disable showing the result of tracker')
+    parser.add_argument('--env', type=str, required=True, help='Specify the environment (local or prod or etc.)')
+
+    
     parser.set_defaults(video_source=0 ,show=True)
     args = parser.parse_args()
 
