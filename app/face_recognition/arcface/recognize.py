@@ -20,7 +20,6 @@ from config import Config
 @dataclass
 class Face_Recognize:
 
-    is_tracker_use : bool
     recognizer_model_name : str
     recognizer_model_path : str
     feature_path : str 
@@ -43,8 +42,7 @@ class Face_Recognize:
         # Mapping of face IDs to names
         self.id_face_mapping = {}
 
-
-    def recognize(self, frame ,bboxes, landmarks, data_mapping:dict = None ):
+    def recognize(self, frame ,bboxes, landmarks, data_mapping:dict, is_tracker_available:bool):
         """
         Perform face recognition on the provided frame.
 
@@ -59,63 +57,64 @@ class Face_Recognize:
                 - id_face_mapping (dict): Mapping of face IDs to recognition results.
                 - caption (str): Recognition result for the current frame.
         """
-        if self.is_tracker_use:
-            if data_mapping == None:
-                raise ValueError("data_mapping must be provided when is_tracker_use is True")
-            
-            caption = "UN_KNOWN"
-            raw_image = frame
-            detection_landmarks = landmarks
-            detection_bboxes = bboxes
-            tracking_ids = data_mapping["tracking_ids"]
-            tracking_bboxes = data_mapping["tracking_bboxes"]
-
-            for i in range(len(tracking_bboxes)):
-                for j in range(len(detection_bboxes)):
-                    mapping_score = self.mapping_bbox(box1=tracking_bboxes[i],
-                                                       box2=detection_bboxes[j])
-                    if mapping_score > self.mapping_score_thresh:
-                        face_alignment = norm_crop(img=raw_image,
-                                                   landmark=detection_landmarks[j])
-
-                        score, name = self.recognition(face_image=face_alignment)
-                        if name is not None:
-                            if score < self.recognition_score_thresh:
-                                caption = "UN_KNOWN"
-                            else:
-                                caption = f"{name}:{score:.2f}"
-
-                        self.id_face_mapping[tracking_ids[i]] = caption
-
-                        detection_bboxes = np.delete(detection_bboxes, j, axis=0)
-                        detection_landmarks = np.delete(detection_landmarks, j, axis=0)
-
-                        break
-
-            if tracking_bboxes == []:
-                caption = "UN_KNOWN"
-
-        else:
+        if is_tracker_available == False:
             self.id_face_mapping = {}
+            # captions = {"id",name}  # Dictionary to store captions for each bounding box
+            counter = -1
             for bbox, landmark in zip(bboxes, landmarks):
-                x1, y1, x2, y2, _ = bbox.astype(int)
-                
                 # Face alignment
+                counter += 1
                 face_alignment = norm_crop(img=frame, landmark=landmark)
 
-                # Face recognition
                 score, name = self.recognition(face_image=face_alignment)
 
-                # Draw bounding box and name
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-                if score < self.recognition_score_thresh:
-                    caption = "UNKNOWN"
+                if name is not None:
+                    if score < self.recognition_score_thresh:
+                        caption = "UN_KNOWN"
+                    else:
+                        caption = f"{name}:{score:.2f}"
                 else:
-                    caption = f"{name}: {score:.2f}"
-                cv2.putText(frame, caption, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    caption = "UN_KNOWN"
 
-        return self.id_face_mapping, caption
+                # Use bbox as key to ensure unique identification
+                self.id_face_mapping[counter] = caption
+        
+            return
+        
+        if data_mapping["tracking_bboxes"] == None:
+            raise ValueError("data_mapping must be provided when is_tracker_use is True")
+        
+        detection_landmarks = landmarks
+        detection_bboxes = bboxes
+        tracking_ids = data_mapping["tracking_ids"]
+        tracking_bboxes = data_mapping["tracking_bboxes"]
+
+        for i in range(len(tracking_bboxes)):
+            for j in range(len(detection_bboxes)):
+                mapping_score = self.mapping_bbox(box1=tracking_bboxes[i],
+                                                box2=detection_bboxes[j])
+                if mapping_score > self.mapping_score_thresh:
+                    face_alignment = norm_crop(img=frame,
+                                            landmark=detection_landmarks[j])
+
+                    score, name = self.recognition(face_image=face_alignment)
+                    if name is not None:
+                        if score < self.recognition_score_thresh:
+                            caption = "UN_KNOWN"
+                        else:
+                            caption = f"{name}:{score:.2f}"
+
+                    self.id_face_mapping[tracking_ids[i]] = caption
+
+                    detection_bboxes = np.delete(detection_bboxes, j, axis=0)
+                    detection_landmarks = np.delete(detection_landmarks, j, axis=0)
+
+                    break
+
+        if tracking_bboxes == []:
+            caption = "UN_KNOWN"
+
+
     
 
     @torch.no_grad()
@@ -207,39 +206,40 @@ class Face_Recognize:
 
         return iou
 
-face_recognizer_dict = {
-    "is_tracker_use" : False,
-    "recognizer_model_name" : "r100",
-    "recognizer_model_path" : "weights/arcface_r100.pth",
-    "feature_path" :  "datasets/face_features/feature",
-    "mapping_score_thresh" : 0.9,
-    "recognition_score_thresh" : 0.25
-}
 
-
-face_detector_dict = {
-    "model_file"  : "../../face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
-    "taskname"    : "detection",
-    "batched"     : False,
-    "nms_thresh"  : 0.4,
-    "center_cache": {},
-    "session"     : "",
-    "detect_thresh" : 0.5,
-    "detect_input_size" : (128,128),
-    "max_num"     : 0,
-    "metric"      : "default",
-    "scalefactor" : 1.0 / 128.0,
-}
-
-
-def video_source_type(value):
-    try:
-        return int(value)
-    except ValueError:
-        return str(value)
 
 if __name__ == "__main__":
     """Main function to start recognition threads."""      
+
+    face_recognizer_dict = {
+        "is_tracker_use" : False,
+        "recognizer_model_name" : "r100",
+        "recognizer_model_path" : "weights/arcface_r100.pth",
+        "feature_path" :  "datasets/face_features/feature",
+        "mapping_score_thresh" : 0.9,
+        "recognition_score_thresh" : 0.25
+    }
+
+
+    face_detector_dict = {
+        "model_file"  : "../../face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
+        "taskname"    : "detection",
+        "batched"     : False,
+        "nms_thresh"  : 0.4,
+        "center_cache": {},
+        "session"     : "",
+        "detect_thresh" : 0.5,
+        "detect_input_size" : (128,128),
+        "max_num"     : 0,
+        "metric"      : "default",
+        "scalefactor" : 1.0 / 128.0,
+    }
+
+    def video_source_type(value):
+        try:
+            return int(value)
+        except ValueError:
+            return str(value)
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--video-source', type=video_source_type, default=0, 
