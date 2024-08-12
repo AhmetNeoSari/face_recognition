@@ -31,6 +31,7 @@ class BYTETracker(object):
         ckpt (str): Path to the model checkpoint file.
         track_img_size (int): Size of the tracking image.
     """
+    is_tracker_available: bool
     match_thresh: float
     track_buffer: int
     track_thresh: float
@@ -59,21 +60,20 @@ class BYTETracker(object):
         self.data_mapping = {
             "tracking_ids": [],
             "tracking_bboxes": [],
+            "tracking_tlwhs" : [],
         }
 
-    def track(self, outputs:torch.Tensor, img_info:dict, fps:float, id_face_mapping:dict):
+    def track(self, outputs:torch.Tensor, img_height:int, img_width:int):
         """
         Track objects in a frame and update tracking information.
 
         Args:
             outputs (torch.Tensor): Detection outputs from the model.
-            img_info (dict): Information about the image, including dimensions.
             fps (float): Frames per second of the video.
             id_face_mapping (dict): Mapping of face IDs to names.
 
         Returns:
             tuple: A tuple containing the tracked image and data mapping.
-                - tracking_image (np.ndarray): Image with tracking information drawn.
                 - data_mapping (dict): Updated data mapping with tracking IDs and bounding boxes.
         """
         tracking_tlwhs = []
@@ -83,7 +83,7 @@ class BYTETracker(object):
 
         if outputs is not None:
             online_targets = self.update(
-                outputs, [img_info["height"], img_info["width"]], self.track_img_size
+                outputs, img_height, img_width, self.track_img_size
             )
 
             for i in range(len(online_targets)):
@@ -97,26 +97,16 @@ class BYTETracker(object):
                     tracking_tlwhs.append(tlwh)
                     tracking_ids.append(tid)
                     tracking_scores.append(t.score)
-
-            # tracking_image = img_info["raw_img"]
-            tracking_image = self.plot_tracking(
-                img_info["raw_img"],
-                tracking_tlwhs,
-                tracking_ids,
-                names=id_face_mapping,
-                frame_id=self.frame_id,
-                fps=fps
-            )
-        else:
-            tracking_image = img_info["raw_img"]
-
+            
+     
         self.data_mapping["tracking_ids"] = tracking_ids
         self.data_mapping["tracking_bboxes"] = tracking_bboxes
+        self.data_mapping["tracking_tlwhs"] = tracking_tlwhs
 
-        return tracking_image, self.data_mapping
+        return self.data_mapping
 
     def plot_tracking(
-        self, image, tlwhs, obj_ids, fps:int, frame_id:int=0, ids2=None, names=[]
+        self, image, tlwhs, obj_ids, frame_id:int=0, ids2=None, names=[]
     ):
         """
         Draw tracking information on the image.
@@ -128,7 +118,7 @@ class BYTETracker(object):
             fps (int): Frames per second of the video.
             frame_id (int, optional): ID of the current frame.
             ids2 (list, optional): Additional IDs for tracking.
-            names (dict, optional): List of names corresponding to object IDs.
+            names (id_face_mappingdict, optional): List of names corresponding to object IDs.
 
         Returns:
             np.ndarray: The image with tracking information drawn.
@@ -148,7 +138,7 @@ class BYTETracker(object):
         radius = max(5, int(im_w / 140.0))
         cv2.putText(
             im,
-            "frame: %d fps: %.2f num: %d" % (frame_id, fps, len(tlwhs)),
+            "frame: %d num: %d" % (frame_id, len(tlwhs)),
             (0, int(15 * text_scale)),
             cv2.FONT_HERSHEY_PLAIN,
             2,
@@ -196,7 +186,7 @@ class BYTETracker(object):
 
         return color
 
-    def update(self, output_results, img_info, img_size):
+    def update(self, output_results:torch.Tensor, img_height:int, img_width:int, img_size:tuple):
         """
         Update the tracking information based on the detection results.
 
@@ -221,8 +211,8 @@ class BYTETracker(object):
             output_results = output_results.cpu().numpy()
             scores = output_results[:, 4] * output_results[:, 5]
             bboxes = output_results[:, :4]  # x1y1x2y2
-        img_h, img_w = img_info[0], img_info[1]
-        scale = min(img_size[0] / float(img_h), img_size[1] / float(img_w))
+        
+        scale = min(img_size[0] / float(img_height), img_size[1] / float(img_width))
         bboxes /= scale
 
         remain_inds = scores > self.track_thresh
@@ -330,8 +320,6 @@ class BYTETracker(object):
             if self.frame_id - track.end_frame > self.max_time_lost:
                 track.mark_removed()
                 removed_stracks.append(track)
-
-        # print('Ramained match {} s'.format(t4-t3))
 
         self.tracked_stracks = [
             t for t in self.tracked_stracks if t.state == TrackState.Tracked
