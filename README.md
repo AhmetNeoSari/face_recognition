@@ -66,6 +66,10 @@ The project has the following directory structure:
 ## How to use
 
 ### Create Environment and Install Packages
+check if you have cuda installed on your computer
+```bash
+nvcc --version
+```
 
 If cuda is not installed on your computer
 - [NVIDIA CUDA INTALLATION GUIDE](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
@@ -172,7 +176,7 @@ python app.py --env prod
 
 ### Face Tracking
 
-1. **ByteTrack**
+ **ByteTrack**
    <p align="center">
    <img src="./assets/bytetrack.png" alt="ByteTrack" />
    <br>
