@@ -1,21 +1,7 @@
 from collections import OrderedDict
-
-import os
-import sys
-
 import numpy as np
 import scipy.linalg
-import cv2
-
 from scipy.optimize import linear_sum_assignment
-from scipy.spatial.distance import cdist
-
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(BASE_DIR)
-
-
 
 def linear_assignment(cost_matrix, thresh):
     if cost_matrix.size == 0:

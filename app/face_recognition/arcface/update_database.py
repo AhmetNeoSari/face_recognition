@@ -8,18 +8,8 @@ import numpy as np
 import torch
 from torchvision import transforms
 from dataclasses import dataclass
+from typing import Any
 
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-root_dir = os.path.dirname(parent_dir)
-sys.path.append(root_dir)
-sys.path.append(current_dir)
-
-print(current_dir)
-
-from face_detection.scrfd.face_detector import Face_Detector
-from face_recognition.arcface.rocognizer_utils import iresnet_inference
 
 @dataclass
 class UpdateDatabase:
@@ -39,7 +29,7 @@ class UpdateDatabase:
     features_path   : str
     recognizer_model_name : str
     recognizer_model_path : str
-    debug : bool
+    logger : Any
     
     def __post_init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -50,6 +40,7 @@ class UpdateDatabase:
             path=self.recognizer_model_path, 
             device=self.device
         )
+        self.logger.info('Update database application started')
 
 
     @torch.no_grad()
@@ -147,8 +138,8 @@ class UpdateDatabase:
                 images_name = np.hstack((old_images_name, images_name))
                 images_emb  = np.vstack((old_images_emb, images_emb))
             
-            if self.debug:
-                print("Update features!")
+            self.logger.info('Update features!')
+
         # Save the combined features
         np.savez_compressed(self.features_path, images_name=images_name, images_emb=images_emb)
 
@@ -194,8 +185,7 @@ class UpdateDatabase:
 
         # Check if no new person is found
         if all_images_name.size == 0 and all_images_emb.size == 0 :
-            if self.debug:
-                print("No new person found!")
+            self.logger.error("No new person found")
             return None
         
         # Update the database with the new features
@@ -203,8 +193,7 @@ class UpdateDatabase:
 
         # Backup the new persons data
         self.backup_new_persons()
-        if self.debug:
-            print("Successfully added new person!")
+        self.logger.info("Successfully added new person!")
 
 
     def fetch_images(self, person_first_name: str, person_last_name: str, source_path: str ):
@@ -230,10 +219,10 @@ class UpdateDatabase:
                 target_file = os.path.join(person_target_path, filename)
                 shutil.move(source_file, target_file)
                 counter += 1
-                if self.debug:
-                    print(f"Moved: {source_file} -> {target_file}")
-        if self.debug:
-            print(f"{counter} images moved to {person_target_path} folder.")
+                self.logger.debug(f"Moved: {source_file} -> {target_file}")
+
+        self.logger.info(f"{counter} images moved to {person_target_path} folder.")
+
 
 
     def delete_person(self, person_first_name: str, person_last_name: str):
@@ -257,7 +246,7 @@ class UpdateDatabase:
             for path in [person_face_path, person_backup_path]:
                 if os.path.exists(path):
                     shutil.rmtree(path, ignore_errors=False)
-                    print(f"Deleted directory: {path}")
+                    self.logger.debug(f"Deleted directory: {path}")
                 else:
                     warnings.warn(f"Directory not found: {path}")
 
@@ -281,8 +270,7 @@ class UpdateDatabase:
 
         # Save the updated features
         np.savez_compressed(self.features_path, images_name=np.array(images_name), images_emb=np.array(images_emb))
-        if self.debug:
-            print(f"Person {person_first_name} {person_last_name} deleted from database and features")
+        self.logger.info(f"Person {person_first_name} {person_last_name} deleted from database and features")
 
 
     def read_features(self):
@@ -319,33 +307,58 @@ class UpdateDatabase:
         return total_persons, person_photo_counts
     
 
-my_dict = {
-    "backup_dir"       : "datasets/backup",
-    "add_persons_dir"  : "datasets/new_persons",
-    "faces_save_dir"   : "datasets/data",
-    "features_path"    : "datasets/face_features/feature",
-    "recognizer_model_name" : "r100",
-    "recognizer_model_path" : "weights/arcface_r100.pth",
-    "debug" : False
-}
-
-detector_dict = {
-    "model_file" : "../../face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
-    "taskname" : "detection",
-    "batched" : False,
-    "nms_thresh" : 0.4,
-    "center_cache" : {},
-    "session" : "",
-    "detect_thresh" : 0.5,
-    "detect_input_size" : [128, 128],
-    "max_num" : 0,
-    "metric" : "default",
-    "scalefactor" : 0.0078125 #1.0 / 128.0
-}
 
 if __name__ == "__main__":
-    detector = Face_Detector(**detector_dict)
-    obj = UpdateDatabase(**my_dict)
-    total_persons, person_photo_counts = obj.count_persons_and_photos()
-    print(total_persons)
-    print(person_photo_counts)
+
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    root_dir = os.path.dirname(parent_dir)
+    sys.path.append(root_dir)
+    sys.path.append(current_dir)
+
+    from face_detection.scrfd.face_detector import Face_Detector
+    from face_recognition.arcface.recognizer_utils import iresnet_inference
+    from logger import Logger
+
+    my_dict = {
+        "backup_dir"       : "datasets/backup",
+        "add_persons_dir"  : "datasets/new_persons",
+        "faces_save_dir"   : "datasets/data",
+        "features_path"    : "datasets/face_features/feature",
+        "recognizer_model_name" : "r100",
+        "recognizer_model_path" : "weights/arcface_r100.pth"
+        
+    }
+
+    detector_dict = {
+        "model_file" : "../../face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
+        "taskname" : "detection",
+        "batched" : False,
+        "nms_thresh" : 0.4,
+        "center_cache" : {},
+        "session" : "",
+        "detect_thresh" : 0.5,
+        "detect_input_size" : [128, 128],
+        "max_num" : 0,
+        "metric" : "default",
+        "scalefactor" : 0.0078125 #1.0 / 128.0
+    }
+
+    logger_dict = {
+        "log_file" : "../../../logs/app.log",
+        "level" : "INFO",
+        "rotation" : "5 MB",
+        "retention" : "10 days",
+        "compression" : "zip",
+        "format":"{time:YYYY-MM-DD HH:mm:ss} || {level} || {message} || {file.name} || {line}"
+    }
+
+    logger = Logger(**logger_dict)
+    detector = Face_Detector(**detector_dict, logger=logger)
+    obj = UpdateDatabase(**my_dict, logger=logger)
+    # obj.fetch_images("Ahmet", "Sari", "/home/ahmet/Pictures/Webcam")
+    # obj.add_persons(detector)
+    a,b = obj.count_persons_and_photos()
+    logger.info(f"Number of registered people {a}")
+    logger.info(f"Number of pictures of registered people {b}")
