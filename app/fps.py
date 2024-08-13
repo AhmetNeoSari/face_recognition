@@ -4,10 +4,16 @@ import time
 @dataclass
 class Fps:
     start_timer : float = field(default=time.time(), init=False)
-    end_timer : float = field(default=time.time(),init=False)
     frame_id : int = field(default=0, init=False)
 
+    def begin_timer(self, is_fps_should_calculate):
+        if is_fps_should_calculate:
+            self.start_timer = time.time()
+
+    def count_frame(self):
+        self.frame_id += 1
+
     def calculate_fps(self):
-        fps = 1.0 / (self.end_timer-self.start_timer)
+        fps = 1.0 / ( time.time() - self.start_timer)
         return fps
     
