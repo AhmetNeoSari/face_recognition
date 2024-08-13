@@ -35,13 +35,14 @@ def main(args):
     while True:
         frame = next(streamer.read_frame())
 
-        fps_object.begin_timer(args.fps)
+        fps_object.begin_timer()
+        fps_object.count_frame()
         outputs, bboxes, landmarks = face_detector.detect_tracking(frame)
         data_mapping = face_tracker.track(outputs, frame.shape[0], frame.shape[1])
         face_recognizer.recognize(frame ,bboxes, landmarks, data_mapping, face_tracker.is_tracker_available)
+        fps = fps_object.calculate_fps()
 
         if args.fps:
-            fps = fps_object.calculate_fps()
             logger.info(f"fps:{int(fps)}")
 
         if not args.show:
@@ -55,7 +56,6 @@ def main(args):
                             fps=fps,
                             names=face_recognizer.id_face_mapping,
                             bboxes=bboxes,
-                            landmarks=landmarks
                             )
 
         cv2.imshow("frame", frame)
