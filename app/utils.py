@@ -8,8 +8,9 @@ def _get_color(idx):
 
 
 def plot(
-    frame:np.ndarray, tlwhs:list, obj_ids:list, frame_id:int, fps:int, names:list, bboxes, landmarks
-):        
+    frame:np.ndarray, tlwhs:list, obj_ids:list, frame_id:int, fps:int, names:list, bboxes:np.ndarray
+):
+    print(type(bboxes))
     text_scale = 2
     text_thickness = 2
     line_thickness = 3
@@ -31,7 +32,6 @@ def plot(
             id_text = "{}".format(int(obj_id))
             if (obj_id) in names:
                 id_text = id_text + ": " + names[obj_id]
-                print("id_text:", id_text)
             color = _get_color(abs(obj_id))
             cv2.rectangle(
                 frame, intbox[0:2], intbox[2:4], color=color, thickness=line_thickness
@@ -69,6 +69,5 @@ def plot(
             (0, 0, 255),
             thickness=text_thickness,
         )
-
 
     return frame
