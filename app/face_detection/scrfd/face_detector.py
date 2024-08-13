@@ -8,14 +8,7 @@ import onnxruntime
 import torch
 import argparse
 from dataclasses import dataclass
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-app_dir = os.path.dirname(parent_dir)
-sys.path.append(app_dir)
-sys.path.append(current_dir)
-
-from config import Config
+from typing import Any
 
 @dataclass
 class Face_Detector:
@@ -51,6 +44,7 @@ class Face_Detector:
     max_num     : int
     metric      : str
     scalefactor : float
+    logger : Any
 
     def __post_init__(self):
         """
@@ -366,14 +360,50 @@ class Face_Detector:
                 cv2.circle(self.image, tuple(key_point), tl + 1, clors[id], -1)
 
 
-def video_source_type(value):
-    try:
-        return int(value)
-    except ValueError:
-        return str(value)
 
 
 if __name__ == "__main__":
+
+    def video_source_type(value):
+        try:
+            return int(value)
+        except ValueError:
+            return str(value)
+        
+    class Custom_logger:
+        
+        def error(self, message: str):
+            print(message)
+        
+        def warning(self, message: str):
+            print(message)
+        
+        def info(self, message: str):
+            print(message)
+        
+        def debug(self, message: str):
+            print(message)
+        
+        def critical(self, message: str):
+            print(message)
+        
+        def trace(self, message: str):
+            print(message)
+
+    face_Detector_dict = {
+        "model_file" : "../../../app/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx",
+        "taskname" : "detection",
+        "batched" : False,
+        "nms_thresh" : 0.4,
+        "center_cache" : {},
+        "session" : "",
+        "detect_thresh" : 0.5,
+        "detect_input_size" : [128, 128],
+        "max_num" : 0,
+        "metric" : "default",
+        "scalefactor" : 0.0078125 #1.0 / 128.0
+    }
+
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--video-source', type=video_source_type, 
                         help='Video source (0: webcam, use string for file path)')
@@ -382,15 +412,14 @@ if __name__ == "__main__":
     parser.set_defaults(video_source=0 ,show=True)
     args = parser.parse_args()
 
-    config = Config()
-    attributes = config.load()
-
     cap = cv2.VideoCapture(args.video_source)
-    detector = Face_Detector(**attributes["detection"])
+
+    logger = Custom_logger()
+    detector = Face_Detector(**face_Detector_dict, logger=logger)
 
     while True:
         _, frame = cap.read()
-        bboxes, landmarks = detector.detect(image=frame)
+        outputs, bboxes, landmarks = detector.detect_tracking(image=frame)
         if args.show:
             detector.draw_bboxes_landmarks(bboxes, landmarks)
             cv2.imshow("Face Detection", detector.image)
