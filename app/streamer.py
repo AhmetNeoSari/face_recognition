@@ -1,9 +1,8 @@
 from time import sleep
 from dataclasses import dataclass
 from typing import Any
-from logger import Logger
+from .logger import Logger
 import cv2
-import sys
 
 @dataclass
 class Streamer:

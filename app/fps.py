@@ -6,9 +6,8 @@ class Fps:
     start_timer : float = field(default=time.time(), init=False)
     frame_id : int = field(default=0, init=False)
 
-    def begin_timer(self, is_fps_should_calculate):
-        if is_fps_should_calculate:
-            self.start_timer = time.time()
+    def begin_timer(self):
+        self.start_timer = time.time()
 
     def count_frame(self):
         self.frame_id += 1

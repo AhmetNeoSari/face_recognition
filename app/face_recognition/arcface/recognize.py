@@ -3,19 +3,14 @@ import numpy as np
 import torch
 from torchvision import transforms
 import argparse
-import sys
-import os.path
 from dataclasses import dataclass
+from typing import Any
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-root_dir = os.path.dirname(parent_dir)
-sys.path.append(root_dir)
-sys.path.append(current_dir)
+if __name__ == "__main__":
+    from recognizer_utils import norm_crop, compare_encodings, read_features, iresnet_inference
+else:
+    from .recognizer_utils import norm_crop, compare_encodings, read_features, iresnet_inference
 
-from rocognizer_utils import norm_crop, compare_encodings, read_features, iresnet_inference
-from face_detection.scrfd.face_detector import Face_Detector
-from config import Config
 
 @dataclass
 class Face_Recognize:
@@ -25,7 +20,7 @@ class Face_Recognize:
     feature_path : str 
     mapping_score_thresh : float
     recognition_score_thresh : float
-
+    logger : Any
 
     def __post_init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,10 +73,10 @@ class Face_Recognize:
 
                 # Use bbox as key to ensure unique identification
                 self.id_face_mapping[counter] = caption
-        
             return
         
         if data_mapping["tracking_bboxes"] == None:
+            self.logger.error("data_mapping must be provided when is_tracker_use is True")
             raise ValueError("data_mapping must be provided when is_tracker_use is True")
         
         detection_landmarks = landmarks
@@ -114,8 +109,6 @@ class Face_Recognize:
         if tracking_bboxes == []:
             caption = "UN_KNOWN"
 
-
-    
 
     @torch.no_grad()
     def get_feature(self, face_image):
@@ -211,8 +204,38 @@ class Face_Recognize:
 if __name__ == "__main__":
     """Main function to start recognition threads."""      
 
+    import os
+    import sys
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    root_dir = os.path.dirname(parent_dir)
+    sys.path.append(root_dir)
+    sys.path.append(current_dir)
+
+    from face_detection.scrfd.face_detector import Face_Detector
+    
+    class Custom_logger:
+        def error(self, message: str):
+            print(message)
+        
+        def warning(self, message: str):
+            print(message)
+        
+        def info(self, message: str):
+            print(message)
+        
+        def debug(self, message: str):
+            print(message)
+        
+        def critical(self, message: str):
+            print(message)
+        
+        def trace(self, message: str):
+            print(message)
+
+
     face_recognizer_dict = {
-        "is_tracker_use" : False,
         "recognizer_model_name" : "r100",
         "recognizer_model_path" : "weights/arcface_r100.pth",
         "feature_path" :  "datasets/face_features/feature",
@@ -235,11 +258,27 @@ if __name__ == "__main__":
         "scalefactor" : 1.0 / 128.0,
     }
 
+    logger_dict = {
+
+        "log_file" : '../../logs/app.log',
+        "level" : "INFO",
+        "rotation" : "5 MB",
+        "retention": "10 days",
+        "compression" : "zip",
+        "format" : "{time} {level} {message}",
+        "enqueue" : True,
+        "backtrace" : True,
+        "diagnose" : True
+    }
+
+
     def video_source_type(value):
         try:
             return int(value)
         except ValueError:
             return str(value)
+        
+    logger = Custom_logger()
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--video-source', type=video_source_type, default=0, 
@@ -248,11 +287,11 @@ if __name__ == "__main__":
 
     cap = cv2.VideoCapture(args.video_source)
 
-    face_recognizer = Face_Recognize(**face_recognizer_dict)
-    face_detector = Face_Detector(**face_detector_dict)
-
+    face_recognizer = Face_Recognize(**face_recognizer_dict,logger=logger)
+    face_detector = Face_Detector(**face_detector_dict,logger=logger)
+    data_mapping = None
     id_face_mapping = {}
     while True:
         _, frame = cap.read()
-        outputs, img_info, bboxes, landmarks = face_detector.detect_tracking(frame)
-        id_face_mapping ,caption = face_recognizer.recognize(frame ,bboxes, landmarks)
+        outputs, bboxes, landmarks = face_detector.detect_tracking(frame)
+        face_recognizer.recognize(frame ,bboxes, landmarks, data_mapping, False)
