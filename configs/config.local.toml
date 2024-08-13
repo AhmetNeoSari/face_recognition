@@ -12,7 +12,6 @@ metric = "default"
 scalefactor = 0.0078125 #1.0 / 128.0
 
 [recognition]
-is_tracker_use = true
 recognizer_model_name = "r100"
 recognizer_model_path = "app/face_recognition/arcface/weights/arcface_r100.pth"
 feature_path = "app/face_recognition/arcface/datasets/face_features/feature"
@@ -20,6 +19,7 @@ mapping_score_thresh = 0.9
 recognition_score_thresh = 0.25
 
 [tracker]
+is_tracker_available = true
 match_thresh = 0.8
 track_buffer = 30
 track_thresh = 0.5
@@ -29,3 +29,18 @@ min_box_area = 10
 aspect_ratio_thresh = 1.6
 ckpt = "bytetrack_s_mot17.pth.tar"
 track_img_size = [128, 128]
+
+[streamer]
+webcam= true
+source= 0
+width= 640
+height= 480
+max_retries= 3  
+
+[logger]
+log_file = 'logs/app.log'
+level = "INFO"
+rotation = "5 MB"
+retention = "10 days"
+compression = "zip"
+format="{time:YYYY-MM-DD HH:mm:ss} || {level} || {message} || {file.name} || {line}"
