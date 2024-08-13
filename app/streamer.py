@@ -1,4 +1,4 @@
-
+from time import sleep
 from dataclasses import dataclass
 from typing import Any
 from logger import Logger
@@ -9,15 +9,16 @@ import sys
 class Streamer:
     webcam: bool
     source: Any
-    logger : Logger
-    width: int = 640
-    height: int = 480
+    width: int
+    height: int
+    max_retries: int  # Max retries for reinitializing the video source
+    logger : Logger = Any
 
     def __post_init__(self):
         try:
             self.logger.info('streamer application started')
         except Exception as e:
-            self.logger.error()
+            self.logger.error("streamer application failed")
     def initialize(self):
         """
         Initializes the video source. If the source is invalid, logs an error and exits the program.
@@ -39,15 +40,35 @@ class Streamer:
         except Exception as e:
             self.logger.error(f"Error initializing video source: {e}")
             sys.exit(1)
+
+
+    def reinitialize(self):
+        """
+        Attempts to reinitialize the video source.
+        """
+        self.release()
+        self.logger.info("Reinitializing video source...")
+        sleep(0.2)
+        self.initialize()
+
+
     def read_frame(self):
         """
         Reads a frame from the video source. Maintains the loop if the video has not ended.
         """
+        retries = 0
         while True:
             ret, frame = self.cap.read()
             if not ret:
                 self.logger.warning("End of video stream or failed to read frame.")
+                retries += 1
+                if retries >= self.max_retries:
+                    self.logger.error("Max retries reached. Attempting to reinitialize...")
+                    self.reinitialize()
+                    retries = 0
                 continue
+            
+            retries = 0
             yield frame
 
     def release(self):
