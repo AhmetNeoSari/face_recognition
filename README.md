@@ -36,31 +36,60 @@ The project has the following directory structure:
 │   │       ├── face_detector.py
 │   │       └── weights
 │   │           ├── README.md
+│   │           └── scrfd_2.5g_bnkps.onnx
 │   ├── face_recognition
 │   │   ├── arcface
 │   │   │   ├── datasets
 │   │   │   │   ├── backup
+│   │   │   │   │   └── ahmet_sari
+│   │   │   │   │       ├── 2024-08-14-131926.jpg
+│   │   │   │   │       ├── 2024-08-14-131927.jpg
+│   │   │   │   │       ├── 2024-08-14-131928.jpg
+│   │   │   │   │       ├── 2024-08-14-131929.jpg
+│   │   │   │   │       └── 2024-08-14-131931.jpg
 │   │   │   │   ├── data
+│   │   │   │   │   └── ahmet_sari
+│   │   │   │   │       ├── 0.jpg
+│   │   │   │   │       ├── 1.jpg
+│   │   │   │   │       ├── 2.jpg
+│   │   │   │   │       ├── 3.jpg
+│   │   │   │   │       └── 4.jpg
 │   │   │   │   ├── face_features
 │   │   │   │   │   └── feature.npz
 │   │   │   │   └── new_persons
+│   │   │   ├── __init__.py
 │   │   │   ├── recognize.py
-│   │   │   ├── rocognizer_utils.py
+│   │   │   ├── recognizer_utils.py
 │   │   │   ├── update_database.py
 │   │   │   └── weights
+│   │   │       ├── arcface_r100.pth
 │   │   │       └── README.md
 │   │   └── __init__.py
 │   ├── face_tracking
 │   │   ├── byte_tracker.py
 │   │   ├── __init__.py
 │   │   └── tracker_utils.py
-│   └── __init__.py
+│   ├── fps.py
+│   ├── __init__.py
+│   ├── logger.py
+│   ├── streamer.py
+│   └── utils.py
 ├── app.py
+├── assets
+│   ├── add_person.png
+│   ├── bytetrack.png
+│   ├── config_local_toml.png
+│   ├── delete_person.png
+│   ├── face_recognition.gif
+│   └── list_people.png
 ├── configs
 │   ├── config.local.toml
 │   └── config.prod.toml
+├── logs
+│   └── app.log
 ├── README.md
 └── requirements.txt
+
 ```
 
 ## How to use
@@ -103,45 +132,28 @@ pip install torch==1.9.1+cpu torchvision==0.10.1+cpu torchaudio==0.9.1 -f https:
 ```bash
 pip install -r requirements.txt
 ```
-### Add new persons to datasets
-
+## Install weights for detection and recognition
+to install detection model weight go to weights directory
 ```bash
-cd app/face_recognition/arcface/
+cd app/face_recognition/arcface/weights/
 ```
-Check the code and the directory paths in the code please change Name Surname and Path that contain photographs
-   <p align="center">
-   <img src="./assets/add_person.png" alt="Code Explanition" />
-   <br>
-   <em>Add Person</em>
-   </p>
+and from the url in readme.md install scrfd_2.5g_bnkps.onnx file
+- [link](https://drive.google.com/drive/folders/1C9RzReAihJQRl8EJOX6vQj7qbHBPmzME?usp=sharing)
 
-after the checks
+to install recognition model weight go to weights directory
 ```bash
-python update_database.py
+cd app/face_recognition/arcface/weights/ 
 ```
 
-### Delete person from datasets
-Change the update_database.py to:
-   <p align="center">
-   <img src="./assets/delete_person.png" alt="Code Explanition" />
-   <br>
-   <em>Delete Person</em>
-   </p>
-
-### View contacts saved in the datasets
-Change the update_database.py to:
-   <p align="center">
-   <img src="./assets/list_people.png" alt="Code Explanition" />
-   <br>
-   <em>Count Persons</em>
-   </p>
+Download arcface_r100.pth at the link
+- [link](https://drive.google.com/drive/folders/1CHHb_7wbvfjKPFNKVBb76lL5sVfBLcv5?usp=sharing)
 
 To run the project you need to load data into the Dataset. For this you need to - [Add new persons to datasets](#Add-new-persons-to-datasets).
 After that return to workplace
 ```bash
 cd ../../..
 ```
-Please make sure you are in the face_recognition directory!
+Please make sure you are in the face_recognition(root) directory!
 
 ### Config Files
 
