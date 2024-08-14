@@ -96,9 +96,12 @@ class UpdateDatabase:
                 input_image = cv2.imread(os.path.join(person_image_path, image_name))
 
                 # Detect faces and landmarks using the face detector
-                bboxes, _ = self.detector.detect(image=input_image)
+                try:
+                    outputs, bboxes, landmarks = self.detector.detect_tracking(image=input_image)
+                except Exception as e:
+                    self.logger.error(f"Error when detect {e}")
+                    sys.exit(1)
 
-                # Extract faces
                 for i, (x1, y1, x2, y2, _) in enumerate(bboxes):
                     # Get the number of files in the person's path
                     number_files = len(os.listdir(person_face_path))
@@ -154,6 +157,13 @@ class UpdateDatabase:
             shutil.move(dir_to_move, self.backup_dir, copy_function=shutil.copytree)
 
 
+    def create_directories_if_not_exists(self, directories):
+        for directory_path in directories:
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+                self.logger.info(f"Dizin '{directory_path}' oluşturuldu.")
+
+
     def add_persons(self,detector):
         """
         Add a new person to the face recognition database.
@@ -168,6 +178,8 @@ class UpdateDatabase:
         self.detector = detector
         all_images_name = np.array([], dtype=str)
         all_images_emb = np.empty((0, 512))  # assuming embeddings have size 512
+
+        self.create_directories_if_not_exists([self.backup_dir, self.add_persons_dir, self.faces_save_dir])
 
         # Read the folder with images of the new person, extract faces, and save them
         for name_person in os.listdir(self.add_persons_dir):
@@ -211,6 +223,7 @@ class UpdateDatabase:
         folder_name = f"{person_first_name}_{person_last_name}".lower()
         person_target_path = os.path.join(self.add_persons_dir, folder_name)
 
+        self.create_directories_if_not_exists([self.add_persons_dir])
         os.makedirs(person_target_path, exist_ok=True)
         counter = 0
         for filename in os.listdir(source_path):
@@ -248,22 +261,23 @@ class UpdateDatabase:
                     shutil.rmtree(path, ignore_errors=False)
                     self.logger.debug(f"Deleted directory: {path}")
                 else:
-                    warnings.warn(f"Directory not found: {path}")
+                    self.logger.warning(f"Directory not found: {path}")
 
         except Exception as e:
-            warnings.warn(f"An error occurred while deleting directories: {e}")
+            self.logger.warning(f"An error occurred while deleting directories: {e}")
 
         # Load existing features
         features = self.read_features()
         if features is None:
-            warnings.warn("No found Features data")
+            self.logger.error("No found Features data")
+            sys.exit(1)
         
         images_name, images_emb = features
         indices_to_remove = [i for i, name in enumerate(images_name) if name == person_name]
 
         if len(indices_to_remove) == 0:
-            warnings.warn(f"Person {person_first_name} {person_last_name} doesn't found in features")
-
+            self.logger.error(f"Person {person_first_name} {person_last_name} doesn't found in features")
+            raise ValueError(f"Person {person_first_name} {person_last_name} doesn't found in features")
         # Remove the person's features from the database
         images_name = np.delete(images_name, indices_to_remove)
         images_emb = np.delete(images_emb, indices_to_remove, axis=0)
@@ -310,7 +324,6 @@ class UpdateDatabase:
 
 if __name__ == "__main__":
 
-
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
     root_dir = os.path.dirname(parent_dir)
@@ -319,8 +332,25 @@ if __name__ == "__main__":
 
     from face_detection.scrfd.face_detector import Face_Detector
     from face_recognition.arcface.recognizer_utils import iresnet_inference
-    from logger import Logger
-
+    
+    class Custom_logger:
+        def error(self, message: str):
+            print(message)
+        
+        def warning(self, message: str):
+            print(message)
+        
+        def info(self, message: str):
+            print(message)
+        
+        def debug(self, message: str):
+            print(message)
+        
+        def critical(self, message: str):
+            print(message)
+        
+        def trace(self, message: str):
+            print(message)
     my_dict = {
         "backup_dir"       : "datasets/backup",
         "add_persons_dir"  : "datasets/new_persons",
@@ -328,7 +358,6 @@ if __name__ == "__main__":
         "features_path"    : "datasets/face_features/feature",
         "recognizer_model_name" : "r100",
         "recognizer_model_path" : "weights/arcface_r100.pth"
-        
     }
 
     detector_dict = {
@@ -345,20 +374,10 @@ if __name__ == "__main__":
         "scalefactor" : 0.0078125 #1.0 / 128.0
     }
 
-    logger_dict = {
-        "log_file" : "../../../logs/app.log",
-        "level" : "INFO",
-        "rotation" : "5 MB",
-        "retention" : "10 days",
-        "compression" : "zip",
-        "format":"{time:YYYY-MM-DD HH:mm:ss} || {level} || {message} || {file.name} || {line}"
-    }
 
-    logger = Logger(**logger_dict)
+    logger = Custom_logger()
     detector = Face_Detector(**detector_dict, logger=logger)
     obj = UpdateDatabase(**my_dict, logger=logger)
-    # obj.fetch_images("Ahmet", "Sari", "/home/ahmet/Pictures/Webcam")
-    # obj.add_persons(detector)
-    a,b = obj.count_persons_and_photos()
-    logger.info(f"Number of registered people {a}")
-    logger.info(f"Number of pictures of registered people {b}")
+    obj.fetch_images("Ahmet","Sari","/home/ahmet/Pictures/Webcam" )
+    obj.add_persons(detector=detector)
+    # obj.delete_person("Ahmet", "Sari")
