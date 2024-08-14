@@ -12,51 +12,51 @@ from app.streamer import Streamer
 
 def main(args):
     config = Config("configs")
-    attributes = config.load(args.env)
+    configs = config.load(args.env)
 
-    logger = Logger(**attributes["logger"])
+    logger = Logger(**configs["logger"])
     
     logger.info('Application started')
+    logger.info(f'Configuration loaded for environment: {args.env}')
+
+    streamer         =    Streamer(           **configs["streamer"],           logger=logger)
+    face_recognizer  =    Face_Recognize(     **configs["recognition"],        logger=logger)
+    face_detector    =    Face_Detector(      **configs["detection"],          logger=logger)
+    face_tracker     =    BYTETracker(        **configs["tracker"],            logger=logger)
+    fps_object       =    Fps()
+
+    streamer.initialize()
+    fps = None
     data_mapping = {
         "tracking_ids": None,
         "tracking_bboxes": None,
         "tracking_tlwhs" : None,
     }
-    
-    logger.info(f'Configuration loaded for environment: {args.env}')
-    streamer = Streamer(**attributes["streamer"], logger=logger)
-    streamer.initialize()
-
-    face_recognizer = Face_Recognize(**attributes["recognition"], logger=logger)
-    face_detector = Face_Detector(**attributes["detection"], logger=logger)
-    face_tracker = BYTETracker(**attributes["tracker"], logger=logger)
-    fps_object = Fps()
-    
     while True:
         frame = next(streamer.read_frame())
 
-        fps_object.begin_timer()
-        fps_object.count_frame()
+        if args.fps:
+            fps_object.begin_timer()
+            fps_object.count_frame()
+
         outputs, bboxes, landmarks = face_detector.detect_tracking(frame)
         data_mapping = face_tracker.track(outputs, frame.shape[0], frame.shape[1])
         face_recognizer.recognize(frame ,bboxes, landmarks, data_mapping, face_tracker.is_tracker_available)
-        fps = fps_object.calculate_fps()
-
+        
         if args.fps:
+            fps = fps_object.calculate_fps()
             logger.info(f"fps:{int(fps)}")
 
         if not args.show:
         # If args.show is False, skip the block of code that shows the frame
             continue
-        
+
         frame = plot(frame=frame,
-                            tlwhs=data_mapping["tracking_tlwhs"],
-                            obj_ids=data_mapping["tracking_ids"],
-                            frame_id=fps_object.frame_id,
-                            fps=fps,
-                            names=face_recognizer.id_face_mapping,
-                            bboxes=bboxes,
-                            )
+                    tlwhs=data_mapping["tracking_tlwhs"],
+                    obj_ids=data_mapping["tracking_ids"],
+                    names=face_recognizer.id_face_mapping,
+                    bboxes=bboxes,
+                    )
 
         cv2.imshow("frame", frame)
         # Press 'Q' on the keyboard to exit
