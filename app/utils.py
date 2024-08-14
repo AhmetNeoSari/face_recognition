@@ -2,22 +2,29 @@ import cv2
 import numpy as np
 
 def _get_color(idx):
+    """
+    Generate a color based on an index value.
+
+    Args:
+        idx (int): Index to generate a unique color.
+
+    Returns:
+        tuple: A tuple representing the BGR color.
+    """
     idx = idx * 3
     color = ((37 * idx) % 255, (17 * idx) % 255, (29 * idx) % 255)
     return color
 
-
 def plot(
-    frame:np.ndarray, tlwhs:list, obj_ids:list, frame_id:int, fps:int, names:list, bboxes:np.ndarray
+    frame:np.ndarray, tlwhs:list, obj_ids:list, names:list, bboxes:np.ndarray
 ):
-    print(type(bboxes))
     text_scale = 2
     text_thickness = 2
     line_thickness = 3
-    if tlwhs != [] and tlwhs is not None:
+    if tlwhs != [] and tlwhs is not None: #is_tracker_available
         cv2.putText(
             frame,
-            "frame: %d fps: %.2f num: %d" % (frame_id, fps, len(tlwhs)),
+            "num: %d" % (len(tlwhs)),
             (0, int(15 * text_scale)),
             cv2.FONT_HERSHEY_PLAIN,
             2,
@@ -45,29 +52,46 @@ def plot(
                 (0, 0, 255),
                 thickness=text_thickness,
             )
-
         return frame
 
     h, w, c = frame.shape
 
-    tl = 1 or round(0.002 * (h + w) / 2) + 1  # Line and font thickness
-    clors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255)]
-    aaa = 0
     # Draw bounding boxes and landmarks on the frame
     for i in range(len(bboxes)):
-        # Get location of the face
-        x1, y1, x2, y2, score = bboxes[i]
-        intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
-        color = _get_color(i)
-        cv2.rectangle(frame, (x1, y1), (x2, y2), color=color, thickness=line_thickness)
         cv2.putText(
             frame,
-            names[i],
-            (intbox[0], intbox[1]),
+            "num: %d" % (len(bboxes)),
+            (0, int(15 * text_scale)),
             cv2.FONT_HERSHEY_PLAIN,
-            text_scale,
+            2,
             (0, 0, 255),
-            thickness=text_thickness,
+            thickness=2,
         )
+        if names == {}:
+            x1, y1, x2, y2, score = bboxes[i]
+            intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
+            color = _get_color(i)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color=color, thickness=line_thickness)
+            continue
+        
+        try:
+            x1, y1, x2, y2, score = bboxes[i]
+            intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
+            color = _get_color(i)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color=color, thickness=line_thickness)
+
+            if i < len(names):
+                cv2.putText(
+                    frame,
+                    names[i],
+                    (intbox[0], intbox[1]),
+                    cv2.FONT_HERSHEY_PLAIN,
+                    text_scale,
+                    (0, 0, 255),
+                    thickness=text_thickness,
+                )
+        except Exception as e:
+            print(f"Error processing bounding boxes: {e}")
+
 
     return frame
