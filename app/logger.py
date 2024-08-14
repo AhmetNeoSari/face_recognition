@@ -11,7 +11,7 @@ class Logger:
     format: str
 
     def __post_init__(self):
-        logger.remove()  # Varsayılan logger'ı kaldırır
+        logger.remove()
         logger.add(
             self.log_file,
             level=self.level,
@@ -20,21 +20,22 @@ class Logger:
             compression=self.compression,
             format=self.format,
         )
+        self.logger = logger
 
     def error(self, message: str):
-        logger.opt(depth=1).error(message)
+        self.logger.opt(depth=1).error(message) #TODO self
 
     def warning(self, message: str):
-        logger.opt(depth=1).warning(message)
+        self.logger.opt(depth=1).warning(message)
     
     def info(self, message: str):
-        logger.opt(depth=1).info(message)
+        self.logger.opt(depth=1).info(message)
     
     def debug(self, message: str):
-        logger.opt(depth=1).debug(message)
+        self.logger.opt(depth=1).debug(message)
     
     def critical(self, message: str):
-        logger.opt(depth=1).critical(message)
+        self.logger.opt(depth=1).critical(message)
     
     def trace(self, message: str):
-        logger.opt(depth=1).trace(message)
+        self.logger.opt(depth=1).trace(message)
