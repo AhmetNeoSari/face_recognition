@@ -52,8 +52,8 @@ class Face_Recognize:
                 - id_face_mapping (dict): Mapping of face IDs to recognition results.
                 - caption (str): Recognition result for the current frame.
         """
+        self.id_face_mapping = {}
         if is_tracker_available == False:
-            self.id_face_mapping = {}
             # captions = {"id",name}  # Dictionary to store captions for each bounding box
             counter = -1
             for bbox, landmark in zip(bboxes, landmarks):
@@ -98,7 +98,6 @@ class Face_Recognize:
                             caption = "UN_KNOWN"
                         else:
                             caption = f"{name}:{score:.2f}"
-
                     self.id_face_mapping[tracking_ids[i]] = caption
 
                     detection_bboxes = np.delete(detection_bboxes, j, axis=0)
@@ -256,19 +255,6 @@ if __name__ == "__main__":
         "max_num"     : 0,
         "metric"      : "default",
         "scalefactor" : 1.0 / 128.0,
-    }
-
-    logger_dict = {
-
-        "log_file" : '../../logs/app.log',
-        "level" : "INFO",
-        "rotation" : "5 MB",
-        "retention": "10 days",
-        "compression" : "zip",
-        "format" : "{time} {level} {message}",
-        "enqueue" : True,
-        "backtrace" : True,
-        "diagnose" : True
     }
 
 
