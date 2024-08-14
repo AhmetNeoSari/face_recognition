@@ -55,7 +55,7 @@ class BYTETracker(object):
                 "tracking_ids": [],
                 "tracking_bboxes": [],
                 "tracking_tlwhs" : [],
-            }            
+            }  
             
             self.logger.info("BYTETracker initialized successfully.")
         except Exception as e:
@@ -76,7 +76,7 @@ class BYTETracker(object):
                 - data_mapping (dict): Updated data mapping with tracking IDs and bounding boxes.
         """
         if self.is_tracker_available == False:
-            return
+            return self.data_mapping
 
         try:
             tracking_tlwhs = []
@@ -88,7 +88,6 @@ class BYTETracker(object):
                 online_targets = self.update(
                     outputs, img_height, img_width, self.track_img_size
                 )
-
                 for i in range(len(online_targets)):
                     t = online_targets[i]
                     tlwh = t.tlwh

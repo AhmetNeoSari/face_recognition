@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 from .logger import Logger
 import cv2
+import sys
 
 @dataclass
 class Streamer:
@@ -18,9 +19,11 @@ class Streamer:
             self.logger.info('streamer application started')
         except Exception as e:
             self.logger.error("streamer application failed")
+            sys.exit(1)
     def initialize(self):
         """
-        Initializes the video source. If the source is invalid, logs an error and exits the program.
+        Initializes the video source. If the source is invalid,
+        logs an error and exits the program.
         """
         try:
             if self.webcam:
@@ -43,7 +46,7 @@ class Streamer:
 
     def reinitialize(self):
         """
-        Attempts to reinitialize the video source.
+        Attempts to reinitialize the video source by releasing the current source and initializing a new one.
         """
         self.release()
         self.logger.info("Reinitializing video source...")
@@ -53,7 +56,13 @@ class Streamer:
 
     def read_frame(self):
         """
-        Reads a frame from the video source. Maintains the loop if the video has not ended.
+        Reads frames from the video source.
+
+        Continuously attempts to read frames, and if a failure occurs, retries up to max_retries times.
+        If retries are exhausted, reinitializes the video source.
+        
+        Yields:
+            numpy.ndarray: The next frame from the video source.
         """
         retries = 0
         while True:
@@ -73,6 +82,8 @@ class Streamer:
     def release(self):
         """
         Releases the video source.
+
+        Stops the video capture and logs the release action.
         """
         if self.cap:
             self.cap.release()

@@ -89,7 +89,9 @@ def read_features(feature_path):
 
 def compare_encodings(encoding, encodings):
     if encodings.size == 0:
-        raise ValueError("No embeddings to compare with.")
+        raise ValueError("No embeddings to compare with.\
+                         there were no people in the database to compare.\
+                            Please upload data to the database")
     sims = np.dot(encodings, encoding.T)
     pare_index = np.argmax(sims)
     score = sims[pare_index]
