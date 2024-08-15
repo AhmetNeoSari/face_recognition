@@ -9,6 +9,7 @@ import torch
 from torchvision import transforms
 from dataclasses import dataclass
 from typing import Any
+from collections import Counter
 
 
 @dataclass
@@ -301,24 +302,24 @@ class UpdateDatabase:
     def count_persons_and_photos(self):
         """
         Count the number of persons and the number of photos for each person in the data directory.
-
-        Returns:
-            total_persons       (int) : Total number of persons.
-            person_photo_counts (dict): A dictionary where keys are person names and values are the number of photos.
         """
-        person_photo_counts = {}
 
-        # Iterate through each directory in the data directory
-        for person_name in os.listdir(self.faces_save_dir):
-            person_path = os.path.join(self.faces_save_dir, person_name)
+        features = self.read_features()
+        if features is None:
+            self.logger.error("No found Features data")
+            sys.exit(1)
 
-            if os.path.isdir(person_path):
-                # Count the number of photos for this person
-                photo_count = len([f for f in os.listdir(person_path) if f.endswith(('png', 'jpg', 'jpeg'))])
-                person_photo_counts[person_name] = photo_count
+        images_name, _ = features
+        name_counts = Counter(images_name)
+        num_people = len(name_counts)
+        
+        self.logger.info(f"Number of people registered in the system is {num_people}")
 
-        total_persons = len(person_photo_counts)
-        return total_persons, person_photo_counts
+        for name, photo_number in name_counts.items():
+            self.logger.info(f"{name} has: {photo_number} photos")
+
+        # total_persons = len(person_photo_counts)
+        # return total_persons, person_photo_counts
     
 
 
@@ -378,6 +379,9 @@ if __name__ == "__main__":
     logger = Custom_logger()
     detector = Face_Detector(**detector_dict, logger=logger)
     obj = UpdateDatabase(**my_dict, logger=logger)
-    obj.fetch_images("Ahmet","Sari","/home/ahmet/Pictures/Webcam" )
-    obj.add_persons(detector=detector)
+    # obj.fetch_images("Name","Surname","/Home/Pictures/Webcam")
+    # obj.add_persons(detector=detector)
     # obj.delete_person("Ahmet", "Sari")
+    obj.count_persons_and_photos()
+    # person_number, persons_photos_number =obj.count_persons_and_photos()
+    # logger.info(f"person number is {person_number}, and total photos of every person: {persons_photos_number}")

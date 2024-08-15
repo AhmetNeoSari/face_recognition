@@ -148,8 +148,7 @@ cd app/face_recognition/arcface/weights/
 Download arcface_r100.pth at the link
 - [link](https://drive.google.com/drive/folders/1CHHb_7wbvfjKPFNKVBb76lL5sVfBLcv5?usp=sharing)
 
-To run the project you need to load data into the Dataset. For this you need to - [Add new persons to datasets](#Add-new-persons-to-datasets).
-After that return to workplace
+To run the project you need to load data into the Dataset. For this you need to add at least one person to dataset
 ```bash
 cd ../../..
 ```
