@@ -16,7 +16,7 @@ recognizer_model_name = "r100"
 recognizer_model_path = "app/face_recognition/arcface/weights/arcface_r100.pth"
 feature_path = "app/face_recognition/arcface/datasets/face_features/feature"
 mapping_score_thresh = 0.9
-recognition_score_thresh = 0.25
+recognition_score_thresh = 0.3
 
 [tracker]
 is_tracker_available = true
@@ -31,8 +31,8 @@ ckpt = "bytetrack_s_mot17.pth.tar"
 track_img_size = [128, 128]
 
 [streamer]
-webcam= true
-source= 0
+webcam= false
+source= "app/human_detection/a.mp4"
 width= 640
 height= 480
 max_retries= 3  
@@ -44,3 +44,9 @@ rotation = "5 MB"
 retention = "10 days"
 compression = "zip"
 format="{time:YYYY-MM-DD HH:mm:ss} || {level} || {message} || {file.name} || {line}"
+
+[person_detection]
+model_path = "yolov10m.pt" #"app/human_detection/yolov9c.pt"
+confidence = 0.5
+iou_thresh = 0.5
+input_size = [640,640]
