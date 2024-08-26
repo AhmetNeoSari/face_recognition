@@ -23,7 +23,7 @@ class Logger:
         self.logger = logger
 
     def error(self, message: str):
-        self.logger.opt(depth=1).error(message) #TODO self
+        self.logger.opt(depth=1).error(message)
 
     def warning(self, message: str):
         self.logger.opt(depth=1).warning(message)

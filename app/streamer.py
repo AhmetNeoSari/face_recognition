@@ -14,12 +14,7 @@ class Streamer:
     max_retries: int  # Max retries for reinitializing the video source
     logger : Logger = Any
 
-    def __post_init__(self):
-        try:
-            self.logger.info('streamer application started')
-        except Exception as e:
-            self.logger.error("streamer application failed")
-            sys.exit(1)
+
     def initialize(self):
         """
         Initializes the video source. If the source is invalid,

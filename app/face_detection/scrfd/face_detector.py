@@ -289,13 +289,11 @@ class Face_Detector:
 
         return keep
 
-
-    def detect_tracking(self, image):
+    def detect(self, image):
         self.image = image
         assert self.detect_input_size is not None
 
         det_img, det_scale = self.preprocess_image()
-
         scores_list, bboxes_list, kpss_list = self.forward(det_img)
 
         scores = np.vstack(scores_list)
@@ -334,7 +332,7 @@ class Face_Detector:
             det = det[bindex, :]
             if kpss is not None:
                 kpss = kpss[bindex, :]
-
+        
         bboxes = np.int32(det / det_scale)
         landmarks = np.int32(kpss / det_scale)
 
