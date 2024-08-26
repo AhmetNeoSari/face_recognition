@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torchvision import transforms
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, List, Tuple
 from collections import Counter
 
 
@@ -98,7 +98,7 @@ class UpdateDatabase:
 
                 # Detect faces and landmarks using the face detector
                 try:
-                    outputs, bboxes, landmarks = self.detector.detect_tracking(image=input_image)
+                    outputs, bboxes, landmarks = self.detector.detect(image=input_image)
                 except Exception as e:
                     self.logger.error(f"Error when detect {e}")
                     sys.exit(1)
@@ -170,10 +170,7 @@ class UpdateDatabase:
         Add a new person to the face recognition database.
 
         Args:
-            backup_dir      (str): Directory to save backup data.
-            add_persons_dir (str): Directory containing images of the new person. ###new_persons
-            faces_save_dir  (str): Directory to save the extracted faces. ###"./datasets/data/"
-            features_path   (str): Path to save face features.
+            detector (Face_Detector): 
         """
         # Initialize lists to store names and features of added images
         self.detector = detector
@@ -181,13 +178,19 @@ class UpdateDatabase:
         all_images_emb = np.empty((0, 512))  # assuming embeddings have size 512
 
         self.create_directories_if_not_exists([self.backup_dir, self.add_persons_dir, self.faces_save_dir])
-
+        skipped_folders = 0
         # Read the folder with images of the new person, extract faces, and save them
         for name_person in os.listdir(self.add_persons_dir):
-            person_image_path = os.path.join(self.add_persons_dir, name_person) #new_persons/ahmet_sari
+            if name_person.count('_') != 1:
+                self.logger.warning(f"Skipped invalid folder name: {name_person}. Folder name must contain exactly one underscore.")
+                skipped_folders += 1
+                continue
+            person_image_path = os.path.join(self.add_persons_dir, name_person)
 
             # Create a directory to save the faces of the person
-            person_face_path = os.path.join(self.faces_save_dir, name_person) #data/ahmet_sari
+            person_face_path = os.path.join(self.faces_save_dir, name_person)
+            if os.path.exists(person_face_path):
+                self.logger.warning(f"created {person_face_path} folder already exists")
             os.makedirs(person_face_path, exist_ok=True)
 
             # Detect and save faces
@@ -209,84 +212,125 @@ class UpdateDatabase:
         self.logger.info("Successfully added new person!")
 
 
-    def fetch_images(self, person_first_name: str, person_last_name: str, source_path: str ):
-        """
-        Moves photos from a specific folder to another folder.     
 
-        Creates a folder with person's first name and last name 
-        in the destination folder and transfers the images into this folder.
+    def fetch_images(self, source_path: str):
+        """
+        Moves only images from subfolders in the source path to self.add_persons_dir.
+
+        Creates a folder for each subfolder in self.add_persons_dir and
+        moves only image files into these folders.
         
         Args:
-            person_first_name (str): Name of the person.
-            person_last_name  (str): Last name of the person.
-            source_path       (str): Path to the source folder.
+            source_path (str): Path to the source folder (e.g., "webcam").
         """
-        folder_name = f"{person_first_name}_{person_last_name}".lower()
-        person_target_path = os.path.join(self.add_persons_dir, folder_name)
-
         self.create_directories_if_not_exists([self.add_persons_dir])
-        os.makedirs(person_target_path, exist_ok=True)
-        counter = 0
-        for filename in os.listdir(source_path):
-            if filename.lower().endswith(("png", "jpg", "jpeg")):
-                source_file = os.path.join(source_path, filename)
-                target_file = os.path.join(person_target_path, filename)
-                shutil.move(source_file, target_file)
-                counter += 1
-                self.logger.debug(f"Moved: {source_file} -> {target_file}")
+        
+        total_folders = 0
+        total_images = 0
+        skipped_folders = 0
+        for item in os.listdir(source_path): # item -> ahmet_sari
+            item_path = os.path.join(source_path, item) # item_path -> home/ahmet/webcam/pictures/ahmet_sari
+            if os.path.isdir(item_path):
+                if item.count('_') != 1:
+                    self.logger.warning(f"Skipped invalid folder name: {item}. Folder name must contain exactly one underscore.")
+                    skipped_folders += 1
+                    continue
 
-        self.logger.info(f"{counter} images moved to {person_target_path} folder.")
+                target_path = os.path.join(self.add_persons_dir, item) # target_path -> new_person/ahmet_sari
+                if os.path.exists(target_path):
+                    self.logger.warning(f"the photos of the person you are trying to add are already in the add folder {target_path}")
+                os.makedirs(target_path, exist_ok=True)
+                
+                image_count = 0
+                for file in os.listdir(item_path):
+                    if file.lower().endswith(("png", "jpg", "jpeg")):
+                        source_file = os.path.join(item_path, file)
+                        target_file = os.path.join(target_path, file)
+                        
+                        # If there is a file with the same name, create a new name
+                        base, extension = os.path.splitext(file)
+                        i = 1
+                        while os.path.exists(target_file):
+                            target_file = os.path.join(target_path, f"{base}_{i}{extension}")
+                            i += 1
+                        
+                        shutil.move(source_file, target_file)
+                        image_count += 1
+                        self.logger.debug(f"Copied: {source_file} -> {target_file}")
+                os.rmdir(item_path)
+                if image_count > 0:
+                    total_folders += 1
+                    total_images += image_count
+                    self.logger.debug(f"Created folder and moved images: {item_path} -> {target_path}")
+                    self.logger.debug(f"Images in {item}: {image_count}")
+                else:
+                    os.rmdir(target_path)  # Eğer resim yoksa oluşturulan klasörü sil
+
+        self.logger.info(f"{total_images} images from {total_folders} folders copied to {self.add_persons_dir}.")
 
 
-
-    def delete_person(self, person_first_name: str, person_last_name: str):
+    def delete_persons(self, persons_list: List[Tuple[str, str]]):
         """
-        Delete a person's data from the system.
+        Delete multiple persons' data from the system.
 
-        This function deletes a person registered in the system from the folder with their face photos,
-        the folder where their backups are kept. 
-        Deletes facial features from the file where the person's facial features are extracted
+        This function deletes data for multiple persons registered in the system. For each person,
+        it removes their face photos folder, backup folder, and facial features from the extracted features file.
 
         Args:
-            person_first_name (str): First name of the person.
-            person_last_name  (str): Last name of the person.
+            persons_list (List[Tuple[str, str]]): List of tuples containing (first_name, last_name) of persons to delete.
+        """
+        try:
+            for person_first_name, person_last_name in persons_list:
+                try:
+                    if person_last_name.strip() == "":
+                        self.logger.error(f"Last name is required for {person_first_name} !!!")
+                        continue
+                    self._delete_single_person(person_first_name, person_last_name)
+                except Exception as e:
+                    self.logger.error(f"Error deleting {person_first_name} {person_last_name}: {e}")
+        except Exception as e:
+            print("person_last_name",person_last_name)
+            if not person_last_name or person_last_name.strip() == "":
+                self.logger.error(f"Last name is required for {person_first_name}")
+
+            self.logger.error(f"Error occured when iterate persons {e}")
+            
+    def _delete_single_person(self, person_first_name: str, person_last_name: str):
+        """
+        Helper function to delete a single person's data.
         """
         person_name = f"{person_first_name}_{person_last_name}".lower()
         person_face_path = os.path.join(self.faces_save_dir, person_name)
         person_backup_path = os.path.join(self.backup_dir, person_name)
 
-        # Remove the person's face directory
-        try: 
-            for path in [person_face_path, person_backup_path]:
-                if os.path.exists(path):
-                    shutil.rmtree(path, ignore_errors=False)
-                    self.logger.debug(f"Deleted directory: {path}")
-                else:
-                    self.logger.warning(f"Directory not found: {path}")
-
-        except Exception as e:
-            self.logger.warning(f"An error occurred while deleting directories: {e}")
+        # Remove the person's directories
+        for path in [person_face_path, person_backup_path]:
+            if os.path.exists(path):
+                shutil.rmtree(path, ignore_errors=False)
+                self.logger.debug(f"Deleted directory: {path}")
+            else:
+                self.logger.warning(f"Directory not found: {path}")
 
         # Load existing features
         features = self.read_features()
         if features is None:
-            self.logger.error("No found Features data")
-            sys.exit(1)
-        
+            self.logger.error("No Features data found")
+            return 
+
         images_name, images_emb = features
         indices_to_remove = [i for i, name in enumerate(images_name) if name == person_name]
 
         if len(indices_to_remove) == 0:
-            self.logger.error(f"Person {person_first_name} {person_last_name} doesn't found in features")
-            raise ValueError(f"Person {person_first_name} {person_last_name} doesn't found in features")
+            self.logger.warning(f"Person {person_first_name} {person_last_name} not found in features")
+            return
+
         # Remove the person's features from the database
         images_name = np.delete(images_name, indices_to_remove)
         images_emb = np.delete(images_emb, indices_to_remove, axis=0)
 
         # Save the updated features
         np.savez_compressed(self.features_path, images_name=np.array(images_name), images_emb=np.array(images_emb))
-        self.logger.info(f"Person {person_first_name} {person_last_name} deleted from database and features")
-
+        self.logger.info(f"Person {person_first_name} {person_last_name} deleted from features")
 
     def read_features(self):
         try:
@@ -317,10 +361,6 @@ class UpdateDatabase:
 
         for name, photo_number in name_counts.items():
             self.logger.info(f"{name} has: {photo_number} photos")
-
-        # total_persons = len(person_photo_counts)
-        # return total_persons, person_photo_counts
-    
 
 
 if __name__ == "__main__":
@@ -379,9 +419,13 @@ if __name__ == "__main__":
     logger = Custom_logger()
     detector = Face_Detector(**detector_dict, logger=logger)
     obj = UpdateDatabase(**my_dict, logger=logger)
-    # obj.fetch_images("Name","Surname","/Home/Pictures/Webcam")
-    # obj.add_persons(detector=detector)
-    # obj.delete_person("Ahmet", "Sari")
-    obj.count_persons_and_photos()
-    # person_number, persons_photos_number =obj.count_persons_and_photos()
-    # logger.info(f"person number is {person_number}, and total photos of every person: {persons_photos_number}")
+    obj.fetch_images("/home/ahmet/Pictures/Webcam")
+    obj.add_persons(detector=detector)
+    
+    # delete_list =[
+    #                 ("arif", "erol"),
+    #                 ("ahmet", "sari"),
+    #                 ("ene", "ak")
+    #             ]
+    # obj.delete_persons(delete_list)
+    # obj.count_persons_and_photos()
