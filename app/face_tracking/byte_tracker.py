@@ -76,7 +76,7 @@ class BYTETracker(object):
                 - data_mapping (dict): Updated data mapping with tracking IDs and bounding boxes.
         """
         if self.is_tracker_available == False:
-            return self.data_mapping
+            return
 
         try:
             tracking_tlwhs = []
@@ -95,20 +95,18 @@ class BYTETracker(object):
                     vertical = tlwh[2] / tlwh[3] > self.aspect_ratio_thresh
                     if tlwh[2] * tlwh[3] > self.min_box_area and not vertical:
                         x1, y1, w, h = tlwh
-                        tracking_bboxes.append([x1, y1, x1 + w, y1 + h])
                         tracking_tlwhs.append(tlwh)
                         tracking_ids.append(tid)
                         tracking_scores.append(t.score)
+                        tracking_bboxes.append([x1, y1, x1 + w, y1 + h])
                 
-        
+            self.data_mapping["tracking_tlwhs"] = tracking_tlwhs
             self.data_mapping["tracking_ids"] = tracking_ids
             self.data_mapping["tracking_bboxes"] = tracking_bboxes
-            self.data_mapping["tracking_tlwhs"] = tracking_tlwhs
 
-            return self.data_mapping
         except Exception as e:
             self.logger.error(f"Error during tracking: {e}")
-            return self.data_mapping
+            return
 
 
     def update(self, output_results:torch.Tensor, img_height:int, img_width:int, img_size:tuple):
@@ -128,17 +126,17 @@ class BYTETracker(object):
         refind_stracks = []
         lost_stracks = []
         removed_stracks = []
+        try:
+            if output_results.shape[1] == 5:
+                scores = output_results[:, 4]
+                bboxes = output_results[:, :4]
+            else:
+                output_results = output_results.cpu().numpy()
+                scores = output_results[:, 4] * output_results[:, 5]
+                bboxes = output_results[:, :4]  # x1y1x2y2
 
-        if output_results.shape[1] == 5:
-            scores = output_results[:, 4]
-            bboxes = output_results[:, :4]
-        else:
-            output_results = output_results.cpu().numpy()
-            scores = output_results[:, 4] * output_results[:, 5]
-            bboxes = output_results[:, :4]  # x1y1x2y2
-        
-        scale = min(img_size[0] / float(img_height), img_size[1] / float(img_width))
-        bboxes /= scale
+        except Exception as E:
+            self.logger.error(f"error when creating scores and bboxes {E}")
 
         remain_inds = scores > self.track_thresh
         inds_low = scores > 0.1
