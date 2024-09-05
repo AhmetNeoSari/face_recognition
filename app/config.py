@@ -11,7 +11,7 @@ class Config:
     """
     config_dir: str = field(default="configs")
 
-    def load(self, env: str):
+    def load(self):
         """
         Load the configuration file for the specified environment.
 
@@ -22,12 +22,12 @@ class Config:
         Raises:
             Exception: If the configuration file for the specified environment is not found, raises an exception.
         """
-        config_path = f"{self.config_dir}/config.{env}.toml"
+        config_path = f"{self.config_dir}/config.toml"
         try:
             with open(config_path, 'r') as file:
                 config_data = toml.load(file)
         except FileNotFoundError:
-            raise Exception(f"Config file for environment '{env}' not found: {config_path}")
+            raise Exception(f"Config file not found: {config_path}")
         
         return config_data
     
