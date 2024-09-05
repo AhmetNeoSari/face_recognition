@@ -9,23 +9,22 @@ from typing import Any
 @dataclass
 class PersonDetection:
     model_path : str
-    confidence : float # 0.25 Güven eşiği
-    iou_thresh : float # 0.45  IoU eşiği
+    confidence : float 
+    iou_thresh : float
     input_size : tuple[int,int]
     logger : Any
 
 
     def __post_init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = YOLO(model=self.model_path)
+        self.model = YOLO(model=self.model_path, verbose=False)
         self.model.fuse()
         self.model.to(self.device)
         self.logger.debug("PersonDetection İnitialized")
 
-
     @torch.no_grad()
     def detect(self, frame):
-        return self.model.predict(frame, classes=[0])
+        return self.model.predict(frame, classes=[0], verbose=False)
 
 
     def save_one_box(self, xyxy, im, gain=1.02, pad=10, BGR=True):
@@ -122,19 +121,15 @@ class PersonDetection:
 
         cropped_persons = []
         bboxes = []
-        scale_bboxes = []
-        outputs = []
         for result in results:
             boxes = result.boxes
             for i, box in enumerate(boxes):
-                # var = box.xyxy.clone()
-                # var[0, 3] = ((var[0, 1] + var[0, 3]) / 2) # halh of body height
                 bboxes.append(box.xyxy.tolist()[0])
                 bboxes[i].append(box.conf.tolist()[0])
                 cropped = self.save_one_box(box.xyxy, frame)
                 cropped_persons.append(cropped)
 
-        return cropped_persons, bboxes 
+        return cropped_persons, bboxes
     
 
 if __name__ == "__main__":

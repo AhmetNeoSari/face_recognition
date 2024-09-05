@@ -55,6 +55,7 @@ class BYTETracker(object):
                 "tracking_ids": [],
                 "tracking_bboxes": [],
                 "tracking_tlwhs" : [],
+                "tracking_scores" : []
             }  
             
             self.logger.info("BYTETracker initialized successfully.")
@@ -83,8 +84,7 @@ class BYTETracker(object):
             tracking_ids = []
             tracking_scores = []
             tracking_bboxes = []
-
-            if outputs is not None:
+            if self.is_empty(outputs) == False:
                 online_targets = self.update(
                     outputs, img_height, img_width, self.track_img_size
                 )
@@ -99,13 +99,13 @@ class BYTETracker(object):
                         tracking_ids.append(tid)
                         tracking_scores.append(t.score)
                         tracking_bboxes.append([x1, y1, x1 + w, y1 + h])
-                
+            
             self.data_mapping["tracking_tlwhs"] = tracking_tlwhs
             self.data_mapping["tracking_ids"] = tracking_ids
             self.data_mapping["tracking_bboxes"] = tracking_bboxes
-
+            self.data_mapping["tracking_scores"] = tracking_scores
         except Exception as e:
-            self.logger.error(f"Error during tracking: {e}")
+            self.logger.warning(f"Error during tracking: {e}")
             return
 
 
@@ -136,7 +136,7 @@ class BYTETracker(object):
                 bboxes = output_results[:, :4]  # x1y1x2y2
 
         except Exception as E:
-            self.logger.error(f"error when creating scores and bboxes {E}")
+            self.logger.warning(f"error when creating scores and bboxes {E}")
 
         remain_inds = scores > self.track_thresh
         inds_low = scores > 0.1
@@ -261,6 +261,13 @@ class BYTETracker(object):
 
         return output_stracks
 
+    def is_empty(self, array):
+        if isinstance(array, torch.Tensor):
+            return array.numel() == 0
+        elif isinstance(array, (list, np.ndarray)):
+            return len(array) == 0
+        else:
+            self.logger.error("Invalid type: Accepts only torch.Tensor, list or numpy.ndarray types.")
 
     def joint_stracks(self, tlista, tlistb):
         """
