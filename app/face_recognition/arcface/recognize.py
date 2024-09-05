@@ -38,7 +38,7 @@ class Face_Recognize:
         self.id_face_mapping = {}
         self.frame_counters  = {}
 
-    def recognize(self, frame ,face_bbox, person_bbox ,landmarks, data_mapping:dict, is_tracker_available:bool):
+    def recognize(self, frame ,face_bbox, person_bbox ,landmarks, data_mapping:dict):
         """
         Perform face recognition on the provided frame.
 
