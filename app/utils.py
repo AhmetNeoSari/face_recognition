@@ -1,9 +1,11 @@
 import numpy as np
 from dataclasses import dataclass
 from PIL import Image, ImageDraw, ImageFont
+from typing import Any
 
 @dataclass
 class Draw():
+    logger: Any
     def __post_init__(self):
         self.text_scale = 2
         self.text_thickness = 2
@@ -46,8 +48,10 @@ class Draw():
             color = self._get_color(abs(obj_id))
             
             # Rectangle çizimi
-            draw.rectangle([intbox[0:2], intbox[2:4]], outline=color, width=self.line_thickness)
-            
+            try:
+                draw.rectangle([ (abs(intbox[0]), abs(intbox[1]) ) , ( abs(intbox[2]), abs(intbox[3]) ) ], outline=color, width=self.line_thickness)
+            except Exception as E:
+                self.logger.warning("Error when drawing rectangle")
             # Text çizimi
             draw.text(
                 (intbox[0], intbox[1]-40),
@@ -60,40 +64,3 @@ class Draw():
         im = np.array(pil_img)
         
         return im
-
-    # def plot(
-    #     self, frame:np.ndarray, tlwhs:list, obj_ids:list, names:list, bboxes:np.ndarray, fps
-    # ):
-    #     im = np.ascontiguousarray(np.copy(frame))
-    #     im_h, im_w = im.shape[:2]
-    #     print("names:",names)
-    #     top_view = np.zeros([im_w, im_w, 3], dtype=np.uint8) + 255
-
-    #     # text_scale = max(1, image.shape[1] / 1600.)
-    #     # text_thickness = 2
-    #     # line_thickness = max(1, int(image.shape[1] / 500.))
-    #     text_scale = 2
-    #     text_thickness = 2
-    #     line_thickness = 3
-    #     radius = max(5, int(im_w / 140.0))
-    #     for i, tlwh in enumerate(tlwhs):
-    #         x1, y1, w, h = tlwh
-    #         intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
-    #         obj_id = int(obj_ids[i])
-    #         id_text = "{}".format(int(obj_id))
-    #         if (obj_id) in names:
-    #             id_text = id_text + ": " + names[obj_id]
-    #         color = self._get_color(abs(obj_id))
-    #         cv2.rectangle(
-    #             im, intbox[0:2], intbox[2:4], color=color, thickness=line_thickness
-    #         )
-    #         cv2.putText(
-    #             im,
-    #             id_text,
-    #             (intbox[0], intbox[1]),
-    #             cv2.FONT_HERSHEY_PLAIN,
-    #             text_scale,
-    #             (0, 0, 255),
-    #             thickness=text_thickness,
-    #         )
-    #     return im
