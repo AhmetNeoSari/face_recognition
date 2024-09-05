@@ -1,6 +1,6 @@
-opencv-python==4.8.1.78
-onnxruntime-gpu==1.18.1 #if you don't have gpu use "onnxruntime==1.18.1" TODO
+opencv-python==4.8.0.74
+onnxruntime-gpu==1.18.1 #! after install ultraliytics import this package
 scipy==1.11.4
-scikit-image==0.22.0
-toml==0.10.2
-loguru==0.7.2
+scikit-image==0.22.0 #! after install ultraliytics import this package
+toml==0.10.2 #!after install ultraliytics import this package
+loguru==0.7.2 #!after install ultraliytics import this package

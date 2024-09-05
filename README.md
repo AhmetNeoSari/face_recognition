@@ -129,6 +129,8 @@ if you don't have CUDA
 pip install torch==1.9.1+cpu torchvision==0.10.1+cpu torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
+if you don't have gpu use "onnxruntime==1.18.1" instead "onnxruntime-gpu==1.18.1" in requirements.txt
+
 ```bash
 pip install -r requirements.txt
 ```
