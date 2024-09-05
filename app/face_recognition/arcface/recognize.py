@@ -18,6 +18,8 @@ class Face_Recognize:
     feature_path : str 
     mapping_score_thresh : float
     recognition_score_thresh : float
+    frame_for_recognize : int
+    face_location_tolerance : float
     logger : Any
 
     def __post_init__(self):
@@ -34,9 +36,9 @@ class Face_Recognize:
 
         # Mapping of face IDs to names
         self.id_face_mapping = {}
+        self.frame_counters  = {}
 
-
-    def recognize(self, frame ,face_bboxes, person_bboxes ,landmarks, data_mapping:dict, is_tracker_available:bool):
+    def recognize(self, frame ,face_bbox, person_bbox ,landmarks, data_mapping:dict, is_tracker_available:bool):
         """
         Perform face recognition on the provided frame.
 
@@ -51,53 +53,32 @@ class Face_Recognize:
                 - id_face_mapping (dict): Mapping of face IDs to recognition results.
                 - caption (str): Recognition result for the current frame.
         """
-        # if is_tracker_available == False:
-        #     self.id_face_mapping = {}
-        # # captions = {"id",name}  # Dictionary to store captions for each bounding box
-        #     counter = -1
-        #     if len(face_bboxes) == 0:
-        #         self.id_face_mapping[0] = "UN_KNOWN"
-        #         return
-
-        #     for bbox, landmark in zip(face_bboxes, landmarks):
-        #         counter += 1
-        #         face_alignment = norm_crop(img=frame, landmark=landmark)
-
-        #         score, name = self.recognition(face_image=face_alignment)
-                
-        #         if name is not None:
-        #             if score < self.recognition_score_thresh:
-        #                 caption = "UN_KNOWN"
-        #             else:
-        #                 caption = f"{name}:{score:.2f}"
-        #         else:
-        #             caption = "UN_KNOWN"
-
-        #         # Use bbox as key to ensure unique identification
-        #         self.id_face_mapping[counter] = caption
-        #     return
-        
-        if data_mapping["tracking_bboxes"] == None:
-            self.logger.error("data_mapping must be provided when is_tracker_use is True")
-            raise ValueError("data_mapping must be provided when is_tracker_use is True")
-        
         detection_landmarks = landmarks
-        face_detection_bboxes = face_bboxes
+        face_detection_bboxes = face_bbox
         tracking_ids = data_mapping["tracking_ids"]
         tracking_bboxes = data_mapping["tracking_bboxes"]
 
         for i in range(len(tracking_bboxes)):
-            if tracking_ids[i] in self.id_face_mapping:
-                if self.id_face_mapping[tracking_ids[i]] != "UN_KNOWN":
-                    continue
+            tracking_id = tracking_ids[i]
+
+            if tracking_id not in self.frame_counters:
+                self.frame_counters[tracking_id] = 0
+
+            if tracking_id in self.id_face_mapping:
+                if self.id_face_mapping[tracking_id] != "UN_KNOWN":
+                    self.frame_counters[tracking_id] += 1
+                    if self.frame_counters[tracking_id] < self.frame_for_recognize or self.frame_for_recognize == 0:
+                        continue
+                    self.frame_counters[tracking_id] = 0
+                else:
+                    self.frame_counters[tracking_id] = 0
                 
-            self.id_face_mapping[tracking_ids[i]] = "UN_KNOWN"
+            self.id_face_mapping[tracking_id] = "UN_KNOWN"
             for j in range(len(face_detection_bboxes)): # complexity O(n) = 1
-
                 mapping_score = self.mapping_bbox(box1=tracking_bboxes[i],
-                                                box2=person_bboxes)
-                if mapping_score > self.mapping_score_thresh:
-
+                                                box2=person_bbox)
+                if mapping_score > self.mapping_score_thresh and self.is_face_reasonably_positioned(person_bbox=person_bbox, face_bbox=face_bbox[j]):                    
+                # if mapping_score > self.mapping_score_thresh:                    
                     face_alignment = norm_crop(img=frame,
                                             landmark=detection_landmarks[j])
 
@@ -106,10 +87,9 @@ class Face_Recognize:
                         if score < self.recognition_score_thresh:
                             caption = "UN_KNOWN"
                         else:
-                            # if name in self.id_face_mapping[tracking_ids[i]]
                             caption = f"{name}:{score:.2f}"
 
-                    new_id = tracking_ids[i]
+                    new_id = tracking_id
                     new_value = caption
 
                     person_name = new_value.split(':')[0]
@@ -125,15 +105,37 @@ class Face_Recognize:
                     else:
                         self.id_face_mapping[new_id] = new_value
 
-                    # self.id_face_mapping[tracking_ids[i]] = caption
-
                     face_detection_bboxes = np.delete(face_detection_bboxes, j, axis=0)
                     detection_landmarks = np.delete(detection_landmarks, j, axis=0)
 
                     break
-        if tracking_bboxes == []:
-            caption = "UN_KNOWN"
 
+    def is_face_reasonably_positioned(self, person_bbox, face_bbox):
+        """
+        Checks whether the face is in a logical place in the general bounding box of the person.
+        
+        Args:
+            person_bbox (tuple): General bounding box of the person (x1, y1, x2, y2).
+            face_bbox (tuple): Face bounding box (x1, y1, x2, y2).
+        
+        Returns:
+            bool: True if the face is in a reasonable position within the person's general bounding box, False otherwise.
+
+        """
+        face_center_x = (face_bbox[0] + face_bbox[2]) / 2
+        face_center_y = (face_bbox[1] + face_bbox[3]) / 2
+
+        person_width = person_bbox[2] - person_bbox[0]
+        person_height = person_bbox[3] - person_bbox[1]
+
+        face_height = face_bbox[3] - face_bbox[1]
+
+        if face_height > (person_height / 2) : #webcam
+            return True
+        if person_width * 0.1 < face_center_x < person_width * 0.9 and face_center_y < person_height / 2:
+            return True
+        return False
+        
 
     @torch.no_grad()
     def get_feature(self, face_image):
