@@ -1,239 +1,197 @@
-<<<<<<< HEAD
-# Face Recognition
+# Face Recognition System
 
+This project is a face recognition system that performs tasks such as face detection, face recognition, and face tracking. The project uses various algorithms and models to detect, recognize, and track faces.
 
+<p align="center">
+<img src="./assets/face_recognition.gif" alt="Face Recognition" />
+<br>
+<em>Face Recognition</em>
+</p>
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/AhmetNeoSari/face-recognition.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/AhmetNeoSari/face-recognition/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
-=======
-# Real-Time Face Recognition
-
-   <p align="center">
-   <img src="./assets/face-recognition.gif" alt="Face Recognition" />
-   <br>
-   <em>Face Recognition</em>
-   </p>
 
 ## Table of Contents
 
-- [Architecture](#architecture)
+- [Project Structure](#Project-Structure)
 - [How to use](#how-to-use)
   - [Create Environment and Install Packages](#create-environment-and-install-packages)
   - [Add new persons to datasets](#add-new-persons-to-datasets)
+  - [Delete person from datasets](#Delete-person-from-datasets)
+  - [View contacts saved in the datasets](#View-contacts-saved-in-the-datasets)
 - [Technology](#technology)
   - [Face Detection](#face-detection)
   - [Face Recognition](#face-recognition)
   - [Face Tracking](#face-tracking)
-  - [Matching Algorithm](#matching-algorithm)
-- [Reference](#reference)
 
-## Architecture
+## Project Structure
 
-   <p align="center">
-   <img src="./assets/sequence-diagram.png" alt="Sequence Diagram" />
-   <br>
-   <em>Sequence Diagram</em>
-   </p>
+The project has the following directory structure:
+
+```
+.
+├── app
+│   ├── config.py
+│   ├── face_detection
+│   │   ├── __init__.py
+│   │   └── scrfd
+│   │       ├── face_detector.py
+│   │       └── weights
+│   │           ├── README.md
+│   │           └── scrfd_2.5g_bnkps.onnx
+│   ├── face_recognition
+│   │   ├── arcface
+│   │   │   ├── datasets
+│   │   │   │   ├── backup
+│   │   │   │   │   └── ahmet_sari
+│   │   │   │   │       ├── 2024-08-14-131926.jpg
+│   │   │   │   │       ├── 2024-08-14-131927.jpg
+│   │   │   │   │       ├── 2024-08-14-131928.jpg
+│   │   │   │   │       ├── 2024-08-14-131929.jpg
+│   │   │   │   │       └── 2024-08-14-131931.jpg
+│   │   │   │   ├── data
+│   │   │   │   │   └── ahmet_sari
+│   │   │   │   │       ├── 0.jpg
+│   │   │   │   │       ├── 1.jpg
+│   │   │   │   │       ├── 2.jpg
+│   │   │   │   │       ├── 3.jpg
+│   │   │   │   │       └── 4.jpg
+│   │   │   │   ├── face_features
+│   │   │   │   │   └── feature.npz
+│   │   │   │   └── new_persons
+│   │   │   ├── __init__.py
+│   │   │   ├── recognize.py
+│   │   │   ├── recognizer_utils.py
+│   │   │   ├── update_database.py
+│   │   │   └── weights
+│   │   │       ├── arcface_r100.pth
+│   │   │       └── README.md
+│   │   └── __init__.py
+│   ├── face_tracking
+│   │   ├── byte_tracker.py
+│   │   ├── __init__.py
+│   │   └── tracker_utils.py
+│   ├── fps.py
+│   ├── __init__.py
+│   ├── logger.py
+│   ├── streamer.py
+│   └── utils.py
+├── app.py
+├── assets
+│   ├── add_person.png
+│   ├── bytetrack.png
+│   ├── config_local_toml.png
+│   ├── delete_person.png
+│   ├── face_recognition.gif
+│   └── list_people.png
+├── configs
+│   ├── config.local.toml
+│   └── config.prod.toml
+├── logs
+│   └── app.log
+├── README.md
+└── requirements.txt
+
+```
 
 ## How to use
 
 ### Create Environment and Install Packages
+check if you have cuda installed on your computer
+```bash
+nvcc --version
+```
 
-```shell
+If cuda is not installed on your computer
+- [NVIDIA CUDA INTALLATION GUIDE](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
+
+Check if Conda environment is installed
+```bash
+conda --version
+```
+if conda environment is not installed please do the necessary installations
+
+- [Conda setup](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html)
+
+```bash
 conda create -n face-dev python=3.9
 ```
 
-```shell
+```bash
 conda activate face-dev
 ```
 
-```shell
+Please install the Torch library compatible with cuda on your system. In my case the following command works. Please do the necessary research from the related link (choose one of the them)
+- [PyTorch Installation Guıde](https://pytorch.org/get-started/locally/)
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+```
+if you don't have CUDA
+```bash
 pip install torch==1.9.1+cpu torchvision==0.10.1+cpu torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
-pip install -r requirements.txt
 ```
 
-### Add new persons to datasets
+if you don't have gpu use "onnxruntime==1.18.1" instead "onnxruntime-gpu==1.18.1" in requirements.txt
 
-1. **Create a folder with the folder name being the name of the person**
+```bash
+pip install -r requirements.txt
+```
+## Install weights for detection and recognition
+to install detection model weight go to weights directory
+```bash
+cd app/face_recognition/arcface/weights/
+```
+and from the url in readme.md install scrfd_2.5g_bnkps.onnx file
+- [link](https://drive.google.com/drive/folders/1C9RzReAihJQRl8EJOX6vQj7qbHBPmzME?usp=sharing)
 
-   ```
-   datasets/
-   ├── backup
-   ├── data
-   ├── face_features
-   └── new_persons
-       ├── name-person1
-       └── name-person2
-   ```
+to install recognition model weight go to weights directory
+```bash
+cd app/face_recognition/arcface/weights/ 
+```
 
-2. **Add the person's photo in the folder**
+Download arcface_r100.pth at the link
+- [link](https://drive.google.com/drive/folders/1CHHb_7wbvfjKPFNKVBb76lL5sVfBLcv5?usp=sharing)
 
-   ```
-   datasets/
-   ├── backup
-   ├── data
-   ├── face_features
-   └── new_persons
-       ├── name-person1
-       │   └── image1.jpg
-       │   └── image2.jpg
-       └── name-person2
-           └── image1.jpg
-           └── image2.jpg
-   ```
+To run the project you need to load data into the Dataset. For this you need to add at least one person to dataset
+```bash
+cd ../../..
+```
+Please make sure you are in the face_recognition(root) directory!
 
-3. **Run to add new persons**
+### Config Files
 
-   ```shell
-   python add_persons.py
-   ```
+The config.local.toml files contain configuration information such as model paths and 
+detection/recognition/tracking parameters. Edit these files according to your needs:
+(You can create similar configuration for production with necessary paths and parameters)
 
-4. **Run to recognize**
+### Running the Application
+For local environment:
 
-   ```shell
-   python recognize.py
-   ```
+```bash
+python app.py --env local
+```
+For production environment:
+```bash
+python app.py --env prod
+```
 
 ## Technology
 
 ### Face Detection
 
-1. **Retinaface**
-
-   - Retinaface is a powerful face detection algorithm known for its accuracy and speed. It utilizes a single deep convolutional network to detect faces in an image with high precision.
-
-2. **Yolov5-face**
-
-   - Yolov5-face is based on the YOLO (You Only Look Once) architecture, specializing in face detection. It provides real-time face detection with a focus on efficiency and accuracy.
-
-3. **SCRFD**
+ **SCRFD**
    - SCRFD (Single-Shot Scale-Aware Face Detector) is designed for real-time face detection across various scales. It is particularly effective in detecting faces at different resolutions within the same image.
 
 ### Face Recognition
 
-1. **ArcFace**
+ **ArcFace**
 
    - ArcFace is a state-of-the-art face recognition algorithm that focuses on learning highly discriminative features for face verification and identification. It is known for its robustness to variations in lighting, pose, and facial expressions.
 
-   <p align="center">
-   <img src="https://user-images.githubusercontent.com/80930272/160270088-a3760d88-ebc8-4535-907e-6b684276755a.png" alt="ArcFace" />
-   <br>
-   <em>ArcFace</em>
-   </p>
 
 ### Face Tracking
 
-1. **ByteTrack**
-
+ **ByteTrack**
    <p align="center">
    <img src="./assets/bytetrack.png" alt="ByteTrack" />
    <br>
    <em>ByteTrack is a simple, fast and strong multi-object tracker.</em>
    </p>
-
-### Matching Algorithm
-
-1. **Cosine Similarity Algorithm**
-
-   - The Cosine Similarity Algorithm is employed for matching faces based on the cosine of the angle between their feature vectors. It measures the similarity between two faces' feature representations, providing an effective approach for face recognition.
-
-   <p align="center">
-   <img src="https://user-images.githubusercontent.com/80930272/160270156-37fe3269-ca65-4692-a3b2-e9568b3876f8.png" alt="Cosine Similarity Algorithm" />
-   <br>
-   <em>Cosine Similarity Algorithm</em>
-   </p>
-
-## Reference
-
-- [ByteTrack](https://github.com/ifzhang/ByteTrack)
-- [Yolov5-face](https://github.com/deepcam-cn/yolov5-face)
-- [InsightFace - ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/arcface_torch)
-- [InsightFace-REST](https://github.com/SthPhoenix/InsightFace-REST)
->>>>>>> master
