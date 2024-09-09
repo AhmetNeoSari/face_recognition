@@ -24,8 +24,10 @@ class PersonDetection:
 
     @torch.no_grad()
     def detect(self, frame):
-        return self.model.predict(frame, classes=[0], verbose=False)
-
+        try:
+            return self.model.predict(frame, classes=[0], verbose=False)
+        except Exception as E:
+            self.logger.error(f"Error when prediction {E}")
 
     def save_one_box(self, xyxy, im, gain=1.02, pad=10, BGR=True):
         """

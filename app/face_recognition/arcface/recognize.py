@@ -282,7 +282,6 @@ if __name__ == "__main__":
         "taskname"    : "detection",
         "batched"     : False,
         "nms_thresh"  : 0.4,
-        "center_cache": {},
         "session"     : "",
         "detect_thresh" : 0.5,
         "detect_input_size" : (128,128),
