@@ -70,8 +70,8 @@ class ObjectCounter:
                     if tracker_id in self.unrecognized_entries:
                         self.unrecognized_entries[tracker_id].cancel() # Cancel old timer
                         del self.unrecognized_entries[tracker_id]
-                    self.logger.info(f"{current_name} crossed the line and went in.")
-                    continue  # No need to wait 5 seconds as the person is recognized
+                        self.logger.info(f"{current_name} crossed the line and went in.")
+                        continue  # No need to wait 5 seconds as the person is recognized
                 else:
                     current_name = previous_name
             else:
