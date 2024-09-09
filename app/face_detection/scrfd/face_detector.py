@@ -23,7 +23,6 @@ class Face_Detector:
         taskname     (str)  : Name of the task (default is "detection").
         batched      (bool) : Indicates whether the model supports batched inputs.
         nms_thresh   (int)  : Threshold value for Non-Maximum Suppression (NMS).
-        center_cache (dict) : Cached values of anchor centers.
         session      (onnxruntime.InferenceSession) : ONNX Runtime session.
         detect_thresh (float) : Threshold value for detection.
         detect_input_size (tuple[int,int]) : Input size expected by the model.
@@ -35,7 +34,6 @@ class Face_Detector:
     taskname    : str 
     batched     : bool
     nms_thresh  : int
-    center_cache: dict
     session     : onnxruntime.InferenceSession
     detect_thresh : float
     detect_input_size : tuple[int,int]
@@ -52,7 +50,7 @@ class Face_Detector:
         It creates an ONNX Runtime session if a model file is provided 
         and initializes various variables needed for the model.
         """
-
+        self.center_cache = {}
         if self.session == "":
             assert self.model_file is not None
             assert os.path.exists(self.model_file)
@@ -336,7 +334,7 @@ class Face_Detector:
         bboxes = np.int32(det / det_scale)
         landmarks = np.int32(kpss / det_scale)
 
-        return torch.tensor(det), bboxes, landmarks
+        return bboxes, landmarks
 
     def draw_bboxes_landmarks(self, bboxes, landmarks):
 
@@ -391,7 +389,6 @@ if __name__ == "__main__":
         "taskname" : "detection",
         "batched" : False,
         "nms_thresh" : 0.4,
-        "center_cache" : {},
         "session" : "",
         "detect_thresh" : 0.5,
         "detect_input_size" : [128, 128],
