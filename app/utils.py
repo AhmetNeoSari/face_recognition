@@ -64,3 +64,33 @@ class Draw():
         im = np.array(pil_img)
         
         return im
+    
+
+    def draw_text(self, frame: np.ndarray, total_people: int, people_inside: list):
+        """
+        Draws the total number of people inside and the names of those people on the frame.
+
+        Args:
+            frame (np.ndarray): Frame to draw on.
+            total_people (int): Total number of people inside.
+            people_inside (list): List of names of people inside.
+
+        Returns:
+            np.ndarray: Frame with the text drawn on it.
+        """
+        im = np.ascontiguousarray(np.copy(frame))
+        pil_img = Image.fromarray(im)
+        draw = ImageDraw.Draw(pil_img)
+        
+        # Text content
+        text = f"Total Inside: {total_people}"
+        people_text = f"People Inside: {', '.join(people_inside)}" if people_inside else "People Inside: None"
+        
+        # Draw the total people and the names of people inside
+        draw.text((10, 10), text, font=self.font, fill=self.text_color)
+        draw.text((10, 50), people_text, font=self.font, fill=self.text_color)
+
+        # Convert back to numpy array
+        im = np.array(pil_img)
+        return im
+    

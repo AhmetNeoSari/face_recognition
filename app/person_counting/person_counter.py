@@ -13,9 +13,9 @@ class ObjectCounter:
     line_end: tuple
     logger: Any
     is_activate : bool
-    inside_office: Counter = field(default_factory=Counter)
-    entered: List[str] = field(default_factory=list)
-    exited: List[str] = field(default_factory=list)
+    inside_office: Counter  = field(default_factory=Counter)
+    entered: List[str]      = field(default_factory=list)
+    exited: List[str]       = field(default_factory=list)
     unrecognized_entries: Dict[int, threading.Timer] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -24,12 +24,12 @@ class ObjectCounter:
         self.line_start = Point(self.line_start[0], self.line_start[1])
         self.line_end = Point(self.line_end[0], self.line_end[1])
 
-        self.box_annotator = sv.BoxAnnotator()
-        self.line_zone = sv.LineZone(start=self.line_start, end=self.line_end, triggering_anchors=[sv.Position.BOTTOM_CENTER])
-        self.line_zone_annotator = sv.LineZoneAnnotator(thickness=4, text_thickness=4, text_scale=2)
+        self.box_annotator          = sv.BoxAnnotator()
+        self.line_zone              = sv.LineZone(start=self.line_start, end=self.line_end, triggering_anchors=[sv.Position.BOTTOM_CENTER])
+        self.line_zone_annotator    = sv.LineZoneAnnotator(thickness=4, text_thickness=4, text_scale=2)
         self.bounding_box_annotator = sv.BoundingBoxAnnotator(thickness=4)
-        self.label_annotator = sv.LabelAnnotator(text_thickness=4, text_scale=2)
-        self.trace_annotator = sv.TraceAnnotator(thickness=4)
+        self.label_annotator        = sv.LabelAnnotator(text_thickness=4, text_scale=2)
+        self.trace_annotator        = sv.TraceAnnotator(thickness=4)
         self.logger.debug("ObjectCounter class initialized")
 
     def count(self, frame: np.ndarray, results, tracker_results, names: dict):
@@ -68,10 +68,10 @@ class ObjectCounter:
                 if (previous_name != current_name) and current_name != "UN_KNOWN":
                     self._update_name(tracker_id, previous_name, current_name)
                     if tracker_id in self.unrecognized_entries:
-                        self.unrecognized_entries[tracker_id].cancel() # Eski timer'ı iptal et
+                        self.unrecognized_entries[tracker_id].cancel() # Cancel old timer
                         del self.unrecognized_entries[tracker_id]
-                    self.logger.info(f"{current_name} çizgiyi geçti ve içeri girdi.")
-                    continue  # Kişi tanındığı için, 5 saniye beklemesine gerek yok
+                        self.logger.info(f"{current_name} crossed the line and went in.")
+                        continue  # No need to wait 5 seconds as the person is recognized
                 else:
                     current_name = previous_name
             else:
@@ -90,20 +90,17 @@ class ObjectCounter:
                     self.unrecognized_entries[tracker_id] = timer
                     timer.start()
                 else:
-                    print(f"{current_name} çizgiyi geçti ve içeri girdi.")
-                    self.logger.info(f"{current_name} çizgiyi geçti ve içeri girdi.")
+                    self.logger.info(f"{current_name} crossed the line and went in.")
 
             elif cross_out:
                 if self.inside_office.get(current_name, 0) > 0:
                     self.exited.append(current_name)
                     self.inside_office[current_name] -= 1
-                    print(f"{current_name} çizgiyi geçti ve dışarı çıktı.")
-                    self.logger.info(f"{current_name} çizgiyi geçti ve dışarı çıktı.")
+                    self.logger.info(f"{current_name} crossed the line and went out.")
 
     def _log_unrecognized(self, tracker_id, current_name):
         if tracker_id in self.tracker_id_to_name and self.tracker_id_to_name[tracker_id] == "UN_KNOWN":
-            print(f"{self.tracker_id_to_name[tracker_id]} çizgiyi geçti ve içeri girdi.")
-            self.logger.info(f"{self.tracker_id_to_name[tracker_id]} çizgiyi geçti ve içeri girdi.")
+            self.logger.info(f"{self.tracker_id_to_name[tracker_id]} crossed the line and went in.")
             del self.unrecognized_entries[tracker_id]
 
     def _update_name(self, tracker_id, previous_name, current_name):

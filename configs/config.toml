@@ -3,7 +3,6 @@ model_file = "app/face_detection/scrfd/weights/scrfd_2.5g_bnkps.onnx"
 taskname = "detection"
 batched = false
 nms_thresh = 0.4
-center_cache = {}
 session = ""
 detect_thresh = 0.5
 detect_input_size = [128, 128]
@@ -54,6 +53,8 @@ iou_thresh = 0.5
 input_size = [640,640]
 
 [person_counter]
-line_start = [871, 423]
-line_end   = [1434, 682]
+#line_start = [871, 423]
+#line_end   = [1434, 682]
+line_start = [0, 0]
+line_end   = [0, 0]
 is_activate = true
