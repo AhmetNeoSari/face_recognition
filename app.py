@@ -14,6 +14,7 @@ from app.logger import Logger
 from app.streamer import Streamer
 from app.human_detection.person_detection import PersonDetection
 from app.person_counting.person_counter import ObjectCounter
+from app.person_counting.utils import LineSelector
 
 def person_detect_tracking(frame_queue: Queue, detection_queue: Queue, logger_config:dict, person_detector_config:dict, person_tracker_config:dict):
     """
@@ -91,14 +92,17 @@ def face_detect_recognize_count(detection_queue: Queue, show:bool,
 
             # People counting
             person_counter.count(frame, results=results[0], tracker_results=data_mapping, names=face_recognizer.id_face_mapping)
-
             # If show flag is true, plot the results and display the frame
             if show:
+                if person_counter.is_activate:
+                    total_people = person_counter.get_current_population()
+                    people_inside = list(person_counter.get_who_in_the_office().keys())
+                    frame = plot_object.draw_text(frame, total_people, people_inside)
+
                 frame = plot_object.plot( frame   = frame,
                                         tlwhs   = data_mapping["tracking_tlwhs"],
                                         obj_ids = data_mapping["tracking_ids"],
                                         names   = face_recognizer.id_face_mapping)
-
 
                 cv2.imshow("frame", frame)
                 # Press 'Q' on the keyboard to exit
@@ -137,6 +141,13 @@ def main(args):
     streamer         =    Streamer(**configs["streamer"], logger=logger)
     fps_object       =    Fps()
 
+    streamer.initialize()
+    if person_counter_config["is_activate"]:
+        frame = next(streamer.read_frame())
+        line_selector = LineSelector()
+        line_start, line_end = line_selector.select_line(frame)
+        person_counter_config['line_start'] = line_start
+        person_counter_config['line_end'] = line_end
     frame_queue = Queue(maxsize=1)
     detection_queue = Queue(maxsize=1)
 
@@ -156,7 +167,6 @@ def main(args):
     detection_process.start()
     recognition_process.start()
     
-    streamer.initialize()
     try:
         while True:
             if args.fps:

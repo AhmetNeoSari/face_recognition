@@ -53,6 +53,8 @@ iou_thresh = 0.5
 input_size = [640,640]
 
 [person_counter]
-line_start = [871, 423]
-line_end   = [1434, 682]
+#line_start = [871, 423]
+#line_end   = [1434, 682]
+line_start = [0, 0]
+line_end   = [0, 0]
 is_activate = true
