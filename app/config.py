@@ -13,10 +13,6 @@ class Config:
 
     def load(self):
         """
-        Load the configuration file for the specified environment.
-
-        Args:
-            env (str): The environment name for which to load the configuration. Examples: "local", "prod".
         Returns:
             dict: A dictionary containing the configuration data read from the file.
         Raises:

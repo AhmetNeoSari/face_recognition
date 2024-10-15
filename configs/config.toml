@@ -32,10 +32,9 @@ ckpt = "bytetrack_s_mot17.pth.tar"
 track_img_size = [128, 128]
 
 [streamer]
-webcam= false
-source= "test_video.mp4" #"/home/ahmet/workplace/face_recognition/app/human_detection/a.mp4"
 width= 640
 height= 480
+#source= "test_video.mp4" #"/home/ahmet/workplace/face_recognition/app/human_detection/a.mp4"
 max_retries= 3
 
 [logger]
@@ -53,8 +52,12 @@ iou_thresh = 0.5
 input_size = [640,640]
 
 [person_counter]
-#line_start = [871, 423]
-#line_end   = [1434, 682]
-line_start = [0, 0]
-line_end   = [0, 0]
+line_start = [871, 423]
+line_end   = [1434, 682]
+#line_start = [0, 0]
+#line_end   = [0, 0]
 is_activate = true
+
+[web_interface]
+host = "0.0.0.0"
+port = 8080
