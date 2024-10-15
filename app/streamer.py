@@ -7,11 +7,10 @@ import sys
 
 @dataclass
 class Streamer:
-    webcam: bool
-    source: Any
     width: int
     height: int
     max_retries: int  # Max retries for reinitializing the video source
+    source: Any
     logger : Logger = Any
 
 
@@ -21,7 +20,7 @@ class Streamer:
         logs an error and exits the program.
         """
         try:
-            if self.webcam:
+            if self.source.isdigit():
                 self.cap = cv2.VideoCapture(int(self.source))
             else:
                 self.cap = cv2.VideoCapture(self.source)

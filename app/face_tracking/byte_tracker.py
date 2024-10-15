@@ -71,10 +71,6 @@ class BYTETracker(object):
             outputs (torch.Tensor): Detection outputs from the model.
             fps (float): Frames per second of the video.
             id_face_mapping (dict): Mapping of face IDs to names.
-
-        Returns:
-            tuple: A tuple containing the tracked image and data mapping.
-                - data_mapping (dict): Updated data mapping with tracking IDs and bounding boxes.
         """
         if self.is_tracker_available == False:
             return

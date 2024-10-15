@@ -28,7 +28,7 @@ class Face_Recognize:
         # Face recognizer
         self.recognizer = iresnet_inference(
             model_name=self.recognizer_model_name, 
-            path=self.recognizer_model_path, 
+            path=self.recognizer_model_path,
             device=self.device
         )
 
@@ -87,12 +87,13 @@ class Face_Recognize:
                         if score < self.recognition_score_thresh:
                             caption = "UN_KNOWN"
                         else:
-                            caption = f"{name}:{score:.2f}"
+                            caption = f"{name}"
 
                     new_id = tracking_id
                     new_value = caption
 
-                    person_name = new_value.split(':')[0]
+                    person_name = new_value
+                    # person_name = new_value.split(':')[0]
                     old_key = None
                     for key,value in self.id_face_mapping.items():
                         if person_name in value:

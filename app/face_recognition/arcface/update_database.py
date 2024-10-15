@@ -162,7 +162,7 @@ class UpdateDatabase:
         for directory_path in directories:
             if not os.path.exists(directory_path):
                 os.makedirs(directory_path)
-                self.logger.info(f"Dizin '{directory_path}' oluşturuldu.")
+                self.logger.info(f"path '{directory_path}' created.")
 
 
     def add_persons(self,detector):
@@ -264,7 +264,7 @@ class UpdateDatabase:
                     self.logger.debug(f"Created folder and moved images: {item_path} -> {target_path}")
                     self.logger.debug(f"Images in {item}: {image_count}")
                 else:
-                    os.rmdir(target_path)  # Eğer resim yoksa oluşturulan klasörü sil
+                    os.rmdir(target_path)  # If there is no image, delete the created folder
 
         self.logger.info(f"{total_images} images from {total_folders} folders copied to {self.add_persons_dir}.")
 
@@ -421,10 +421,10 @@ if __name__ == "__main__":
     obj.fetch_images("/home/ahmet/Pictures/Webcam")
     obj.add_persons(detector=detector)
     
-    # delete_list =[
-    #                 ("arif", "erol"),
-    #                 ("ahmet", "sari"),
-    #                 ("ene", "ak")
-    #             ]
-    # obj.delete_persons(delete_list)
-    # obj.count_persons_and_photos()
+    delete_list =[
+                    ("arif", "erol"),
+                    ("ahmet", "sari"),
+                    ("ene", "ak")
+                ]
+    obj.delete_persons(delete_list)
+    obj.count_persons_and_photos()
