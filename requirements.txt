@@ -1,6 +1,10 @@
+ultralytics==8.2.78
+uvicorn==0.30.6
+onnxruntime-gpu==1.18.1
+scikit-image==0.22.0
+toml==0.10.2
+loguru==0.7.2
+supervision==0.22.0
+fastapi==0.114.0
+python-multipart==0.0.12
 opencv-python==4.8.0.74
-onnxruntime-gpu==1.18.1 #! after install ultraliytics import this package
-scipy==1.11.4
-scikit-image==0.22.0 #! after install ultraliytics import this package
-toml==0.10.2 #!after install ultraliytics import this package
-loguru==0.7.2 #!after install ultraliytics import this package
