@@ -13,9 +13,7 @@ This project is a face recognition system that performs tasks such as face detec
 - [Project Structure](#Project-Structure)
 - [How to use](#how-to-use)
   - [Create Environment and Install Packages](#create-environment-and-install-packages)
-  - [Add new persons to datasets](#add-new-persons-to-datasets)
-  - [Delete person from datasets](#Delete-person-from-datasets)
-  - [View contacts saved in the datasets](#View-contacts-saved-in-the-datasets)
+  - [Running the application](#running-the-application)
 - [Technology](#technology)
   - [Face Detection](#face-detection)
   - [Face Recognition](#face-recognition)
@@ -123,6 +121,14 @@ conda create -n face-dev python=3.9
 conda activate face-dev
 ```
 
+create new package
+```bash
+mkdir ~/workplace
+cd ~/workplace
+git clone https://github.com/AhmetNeoSari/face_recognition.git
+cd face_recognition
+```
+
 if you don't have gpu use "onnxruntime==1.18.1" instead "onnxruntime-gpu==1.18.1" in requirements.txt
 
 ```bash
@@ -131,14 +137,14 @@ pip install -r requirements.txt
 ## Install weights for detection and recognition
 to install detection model weight go to weights directory
 ```bash
-cd app/face_recognition/arcface/weights/
+cd ~/workplace/face_recognition/app/face_detection/scrfd/weights
 ```
 and from the url in readme.md install scrfd_2.5g_bnkps.onnx file
 - [link](https://drive.google.com/drive/folders/1C9RzReAihJQRl8EJOX6vQj7qbHBPmzME?usp=sharing)
 
 to install recognition model weight go to weights directory
 ```bash
-cd app/face_recognition/arcface/weights/ 
+cd ~/workplace/face_recognition/app/face_recognition/arcface/weights/ 
 ```
 
 Download arcface_r100.pth at the link
@@ -146,14 +152,14 @@ Download arcface_r100.pth at the link
 
 to install YOLO weight for human detection navigate the path
 ```bash
-cd app/human_detection/weights
+cd ~/workplace/face_recognition/app/human_detection/weights
 ```
 and download the yolo model with the relevant link
 - [link](https://docs.ultralytics.com/models/yolov10/#model-variants)
 
 To run the project you need to load data into the Dataset. For this you need to add at least one person to dataset
 ```bash
-cd ../../..
+cd ~/workplace/face_recognition/
 ```
 Please make sure you are in the face_recognition(root) directory!
 
@@ -163,18 +169,56 @@ The config.toml where is configs/config.toml files contain configuration informa
 detection/recognition/tracking parameters. Edit these files according to your needs.
 
 ### Running the Application
+Firstly, add user to system:
 ```bash
+cd ~/workplace/face_recognition/app/face_recognition/arcface/update_database.py
+```
+Use the ```fetch_images``` function to get user photos and use ```add_persons``` function to add persons to system. The folder name must name_surname, the folder contains photos of user
+```python
+obj.fetch_images("~/Pictures/Webcam/name_surname")
+```
+After add user to system. Ready to start.
+
+```bash
+cd ~/workplace/face_recognition/
 python app.py
 ```
 If you want to find out what the fps is, you can print it to the log file by starting it as follows:
 ```bash
+cd ~/workplace/face_recognition/
 python app.py --fps
 ```
 if you want to view the output you can run it as follows:
 ```bash
 python app.py --show
 ```
+   <p align="center">
+   <img src="./assets/terminal.png"/>
+   <br>
+   </p>
 
+navigate port(8080): 
+- [web interface ](https://drive.google.com/drive/folders/1CHHb_7wbvfjKPFNKVBb76lL5sVfBLcv5?usp=sharing)
+
+choose one of the **Video Yolu Gir**, **RTSP'yi Gir**, **Kamerayı Seç** buttons and press to the button.
+   <p align="center">
+   <img src="./assets/web_interface.png"/>
+   <br>
+   </p>
+
+After entering the video path, press the ‘Video Yükle’ button and then the ‘Video Oynat’ button. (Enter a number such as 0, 1, 2 for the Select camera button. 0 for Webcam)
+   <p align="center">
+   <img src="./assets/load_video.png"/>
+   <br>
+   </p>
+Draw the region to be analysed in the first frame after pressing the "Video Oynat" button. Then, press "q".
+   <p align="center">
+   <img src="./assets/draw_line.png" />
+   <br>
+   <em></em>
+   </p>
+
+The analysis will start on the web page
 ## Technology
 
 ### Face Detection

@@ -418,13 +418,16 @@ if __name__ == "__main__":
     logger = Custom_logger()
     detector = Face_Detector(**detector_dict, logger=logger)
     obj = UpdateDatabase(**my_dict, logger=logger)
-    obj.fetch_images("/home/ahmet/Pictures/Webcam")
+    obj.fetch_images("~/Pictures/Webcam/name_surname") #TODO edit this line
     obj.add_persons(detector=detector)
     
-    delete_list =[
-                    ("arif", "erol"),
-                    ("ahmet", "sari"),
-                    ("ene", "ak")
-                ]
-    obj.delete_persons(delete_list)
-    obj.count_persons_and_photos()
+    # to delete a user 
+    # delete_list =[
+    #                 ("arif", "erol"),
+    #                 ("ahmet", "sari"),
+    #                 ("enes", "ak")
+    #             ]
+    # obj.delete_persons(delete_list)
+
+    #to list users
+    # obj.count_persons_and_photos()
