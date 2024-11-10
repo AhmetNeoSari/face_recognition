@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    color: #5e9ca0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Video display (responsive style maintaining 16:9 ratio) */
+.screen {
+    width: 100%;
+    max-width: 640px;
+    height: 360px; /* We give a constant height */
+    background-color: #000;
+    border: 2px solid #5e9ca0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#video-frame {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* We ensure that the video fits perfectly in the frame */
+}
+
+/* We use flexbox to place the buttons side by side */
+.button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn {
+    margin: 0 10px; /* We add a horizontal space between the buttons */
+    padding: 10px 20px;
+    background-color: #5e9ca0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #4e8a90;
+}
+
+/* Log screen */
+.log-screen {
+    width: 100%;
+    max-width: 640px;
+    height: 200px; /* We give a constant height */
+    background-color: #e0e0e0; /* Grey background */
+    border: 2px solid #5e9ca0;
+    overflow-y: auto; /* Scroll bar if logs overflow */
+    padding: 10px;
+    box-sizing: border-box;
+    margin-top: 20px;
+}
+
+/* Arrangements for small screens (mobile) */
+@media (max-width: 600px) {
+    .screen, .log-screen {
+        width: 100%;
+        max-width: 100%; /* Full width on small screens */
+        padding-top: 56.25%; /* Maintain ratio (16:9) */
+    }
+
+    .button-container {
+        flex-direction: column; /* Switch the buttons to vertical order on mobile */
+    }
+
+    .btn {
+        width: 100%; /* Full width buttons on small screens */
+        font-size: 14px;
+        margin: 10px 0; /* Add vertical space between buttons on mobile */
+    }
+
+    .log-screen {
+        height: 150px; /* Make the log screen smaller on small screens */
+    }
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Interface</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        #video-path-container, #rtsp-endpoint-container, #camera-index-container {
+            display: none;  /* Initially it will be confidential */
+        }
+    </style>
+</head>
+<body>
+    <h1>Hoşgeldiniz!</h1>
+    
+    <!-- Video playback screen -->
+    <div class="screen" id="video-screen">
+        <img id="video-frame" src="/video-stream" />
+    </div>
+
+    <!-- A div wrapping the buttons -->
+    <div class="button-container">
+        <button class="btn" id="play-button" onclick="startVideo()">Videoyu Oynat</button>
+        <button class="btn" id="video-path-button" onclick="showVideoPathInput()">Video Yolu Gir</button>
+        <button class="btn" id="rtsp-button" onclick="showRTSPInput()">RTSP'yi Gir</button>
+        <button class="btn" id="camera-button" onclick="showCameraInput()">Kamerayı Seç</button>
+    </div>
+
+    <!-- Tile for video path input (initially hidden) -->
+    <div id="video-path-container">
+        <label for="video-path">Video Yolu Girin:</label>
+        <input type="text" id="video-path" placeholder="Video yolunu girin" />
+        <button class="btn" onclick="submitVideoPath()">Video Yükle</button>
+    </div>
+
+    <!-- Tile for RTSP endpoint entry (initially hidden) -->
+    <div id="rtsp-endpoint-container">
+        <label for="rtsp-endpoint">RTSP Endpoint Girin:</label>
+        <input type="text" id="rtsp-endpoint" placeholder="RTSP endpoint girin" />
+        <button class="btn" onclick="submitRTSPEndpoint()">RTSP Yükle</button>
+    </div>
+
+    <!-- Tile for camera selection (initially hidden) -->
+    <div id="camera-index-container">
+        <label for="camera-index">Kamera İndeksi Girin:</label>
+        <input type="number" id="camera-index" placeholder="Kamera indeksi (örn: 0)" />
+        <button class="btn" onclick="submitCameraIndex()">Kamerayı Seç</button>
+    </div>
+
+    <!-- log-screen -->
+    <div class="log-screen" id="log-screen"></div>
+
+    <!-- JavaScript code -->
+    <script>
+        function startVideo() {
+            fetch('/start-video', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data.message));
+        }
+
+        // Show video path input box
+        function showVideoPathInput() {
+            document.getElementById('video-path-container').style.display = 'block';
+            document.getElementById('rtsp-endpoint-container').style.display = 'none';
+            document.getElementById('camera-index-container').style.display = 'none';
+            disableOtherButtons();  // Disable other buttons
+        }
+
+        // Show RTSP endpoint input box
+        function showRTSPInput() {
+            document.getElementById('rtsp-endpoint-container').style.display = 'block';
+            document.getElementById('video-path-container').style.display = 'none';
+            document.getElementById('camera-index-container').style.display = 'none';
+            disableOtherButtons();  // Disable other buttons
+        }
+
+        // Show camera index input box
+        function showCameraInput() {
+            document.getElementById('camera-index-container').style.display = 'block';
+            document.getElementById('video-path-container').style.display = 'none';
+            document.getElementById('rtsp-endpoint-container').style.display = 'none';
+            disableOtherButtons();  // Disable other buttons
+        }
+
+        function submitVideoPath() {
+            const videoPath = document.getElementById('video-path').value;
+            const formData = new FormData();
+            formData.append('video_path', videoPath);
+
+            fetch('/upload-video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => console.log(data.message));
+        }
+
+        function submitRTSPEndpoint() {
+            const rtspEndpoint = document.getElementById('rtsp-endpoint').value;
+            const formData = new FormData();
+            formData.append('rtsp_endpoint', rtspEndpoint);
+
+            fetch('/upload-rtsp', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => console.log(data.message));
+        }
+
+        function submitCameraIndex() {
+            const cameraIndex = document.getElementById('camera-index').value;
+            const formData = new FormData();
+            formData.append('camera_index', cameraIndex);
+
+            fetch('/upload-camera', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => console.log(data.message));
+        }
+
+        // Disable other buttons
+        function disableOtherButtons() {
+            document.getElementById('video-path-button').disabled = true;
+            document.getElementById('rtsp-button').disabled = true;
+            document.getElementById('camera-button').disabled = true;
+        }
+
+        // Receiving log messages with EventSource
+        var logSource = new EventSource("/log-stream");
+        logSource.onmessage = function(event) {
+            var logScreen = document.getElementById('log-screen');
+            var newLog = document.createElement('p');
+            newLog.textContent = event.data;  // Receive the incoming log message
+            logScreen.appendChild(newLog);  // Add to log screen
+        };
+    </script>
+</body>
+</html>

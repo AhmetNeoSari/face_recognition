@@ -36,8 +36,6 @@ class Draw():
         pil_img = Image.fromarray(im)
         draw = ImageDraw.Draw(pil_img)
         
-        # Font ayarları (bir TTF dosyası belirtmelisiniz)
-        
         for i, tlwh in enumerate(tlwhs):
             x1, y1, w, h = tlwh
             intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
@@ -47,20 +45,19 @@ class Draw():
                 id_text = id_text + ": " + names[obj_id]
             color = self._get_color(abs(obj_id))
             
-            # Rectangle çizimi
+            # draw rectangle
             try:
                 draw.rectangle([ (abs(intbox[0]), abs(intbox[1]) ) , ( abs(intbox[2]), abs(intbox[3]) ) ], outline=color, width=self.line_thickness)
-            except Exception as E:
-                self.logger.warning("Error when drawing rectangle")
-            # Text çizimi
-            draw.text(
+                draw.text(
                 (intbox[0], intbox[1]-40),
                 id_text,
                 font=self.font,
                 fill=self.text_color
-            )
-        
-        # PIL görüntüsünü numpy array'e dönüştürme
+                )
+            except Exception as E:
+                self.logger.warning("Error when drawing rectangle")
+
+        # Converting PIL image to numpy array
         im = np.array(pil_img)
         
         return im
@@ -84,7 +81,7 @@ class Draw():
         
         # Text content
         text = f"Total Inside: {total_people}"
-        people_text = f"People Inside: {', '.join(people_inside)}" if people_inside else "People Inside: None"
+        people_text = f"People Inside: {', '.join(people_inside)}" if people_inside else "People Inside: 0"
         
         # Draw the total people and the names of people inside
         draw.text((10, 10), text, font=self.font, fill=self.text_color)
