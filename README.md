@@ -176,6 +176,7 @@ cd ~/workplace/face_recognition/app/face_recognition/arcface/update_database.py
 Use the ```fetch_images``` function to get user photos and use ```add_persons``` function to add persons to system. The folder name must name_surname, the folder contains photos of user
 ```python
 obj.fetch_images("~/Pictures/Webcam/name_surname")
+obj.add_persons(detector=detector)
 ```
 After add user to system. Ready to start.
 
