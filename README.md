@@ -198,7 +198,7 @@ python app.py --show
    </p>
 
 navigate port(8080): 
-- [web interface ](https://drive.google.com/drive/folders/1CHHb_7wbvfjKPFNKVBb76lL5sVfBLcv5?usp=sharing)
+- [web interface ](http://0.0.0.0:8080)
 
 choose one of the **Video Yolu Gir**, **RTSP'yi Gir**, **Kamerayı Seç** buttons and press to the button.
    <p align="center">
