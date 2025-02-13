@@ -98,7 +98,7 @@ class UpdateDatabase:
 
                 # Detect faces and landmarks using the face detector
                 try:
-                    outputs, bboxes, landmarks = self.detector.detect(image=input_image)
+                    bboxes, landmarks = self.detector.detect(image=input_image)
                 except Exception as e:
                     self.logger.error(f"Error when detect {e}")
                     sys.exit(1)
@@ -194,8 +194,9 @@ class UpdateDatabase:
             os.makedirs(person_face_path, exist_ok=True)
 
             # Detect and save faces
+            print("aaaa")
             images_name, images_emb = self.detect_and_save_faces(person_image_path, person_face_path)
-
+            print("bbbb")
             all_images_name = np.concatenate((all_images_name, images_name))
             all_images_emb = np.vstack((all_images_emb, images_emb))
 
@@ -418,7 +419,7 @@ if __name__ == "__main__":
     logger = Custom_logger()
     detector = Face_Detector(**detector_dict, logger=logger)
     obj = UpdateDatabase(**my_dict, logger=logger)
-    obj.fetch_images("~/Pictures/Webcam/name_surname") #TODO edit this line
+    # obj.fetch_images("/home/ahmet/Pictures/persons") #TODO edit this line
     obj.add_persons(detector=detector)
     
     # to delete a user 

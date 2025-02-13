@@ -412,7 +412,7 @@ if __name__ == "__main__":
 
     while True:
         _, frame = cap.read()
-        outputs, bboxes, landmarks = detector.detect(image=frame)
+        bboxes, landmarks = detector.detect(image=frame)
         if args.show:
             detector.draw_bboxes_landmarks(bboxes, landmarks)
             cv2.imshow("Face Detection", detector.image)

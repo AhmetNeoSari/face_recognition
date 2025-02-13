@@ -274,7 +274,8 @@ if __name__ == "__main__":
         "recognizer_model_path" : "weights/arcface_r100.pth",
         "feature_path" :  "datasets/face_features/feature",
         "mapping_score_thresh" : 0.9,
-        "recognition_score_thresh" : 0.25
+        "recognition_score_thresh" : 0.25,
+        "face_location_tolerance" : 0.3
     }
 
 
@@ -314,7 +315,7 @@ if __name__ == "__main__":
     while True:
         star_timer = time.time()
         _, frame = cap.read()
-        outputs, bboxes, landmarks = face_detector.detect(frame)
+        bboxes, landmarks = face_detector.detect(frame)
         face_recognizer.recognize(frame ,bboxes, landmarks, data_mapping, False)
         end_time = time.time()
 
