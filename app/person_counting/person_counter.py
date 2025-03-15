@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List
 from collections import Counter
 from multiprocessing import Queue
+import requests
 
 @dataclass
 class ObjectCounter:
@@ -75,6 +76,7 @@ class ObjectCounter:
                         self.logger.info(f"{current_name} went in.")
                         tmp = f"{current_name} went in."
                         self.log_queue.put(tmp)
+                        response = requests.post("http://backend:8080/user-detected" , {"name" : current_name, "is_known" : True}, )
                         continue  # No need to wait 5 seconds as the person is recognized
                 else:
                     current_name = previous_name

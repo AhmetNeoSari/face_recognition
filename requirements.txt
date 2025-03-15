@@ -8,3 +8,4 @@ supervision==0.22.0
 fastapi==0.114.0
 python-multipart==0.0.12
 opencv-python==4.8.0.74
+opencv-contrib-python

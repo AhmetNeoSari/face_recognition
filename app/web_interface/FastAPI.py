@@ -1,17 +1,20 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from dataclasses import dataclass, field
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from fastapi import WebSocket,  UploadFile, File, Form
-from dataclasses import dataclass, field
+from fastapi import WebSocket,  UploadFile, File, Form, HTTPException
 import cv2
 from multiprocessing import Process, Queue, Value, Manager
 from starlette.responses import StreamingResponse
 import time
 import os
 from typing import Any
+import shutil
+
+BASE_DIR = Path("app/face_recognition/arcface/datasets/new_persons")
 
 @dataclass
 class WebApp:
@@ -41,6 +44,13 @@ class WebApp:
         def read_root():
             html_content = Path("app/web_interface/templates/index.html").read_text()
             return HTMLResponse(content=html_content)
+        
+        @self.app.get("/user_register", response_class=HTMLResponse)
+        def read_root():
+            html_content = Path("app/web_interface/templates/user_register.html").read_text()
+            return HTMLResponse(content=html_content)
+
+
 
         # For video streaming
         @self.app.get("/video-stream")
@@ -90,7 +100,50 @@ class WebApp:
                 return {"message": f"Camera {camera_index} selected", "camera_index": camera_index}
             except ValueError:
                 return {"message": "No valid camera index found", "error": True}
+
+        @self.app.post("/submit")
+        def create_upload(
+            name: str = Form(...),
+            surname: str = Form(...),
+            photos: list[UploadFile] = File(...)
+        ):
+            try:
+                # Dizin ismini oluştur
+                dir_name = f"{name.strip().lower()}_{surname.strip().lower()}"
+                user_dir = BASE_DIR / dir_name
+                
+                # Dizin oluştur
+                os.makedirs(user_dir, exist_ok=True)
+                
+                # Fotoğrafları kaydet
+                saved_files = []
+                for photo in photos:
+                    file_path = user_dir / photo.filename
                     
+                    # Dosyayı senkron olarak kaydet
+                    with open(file_path, "wb") as buffer:
+                        shutil.copyfileobj(photo.file, buffer)
+                    
+                    saved_files.append(str(file_path))
+
+                return {
+                    "status": "success",
+                    "user": f"{name} {surname}",
+                    "saved_files": saved_files,
+                    "directory": str(user_dir)
+                }
+                
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Dosya kaydetme hatası: {str(e)}"
+                )
+            finally:
+                # Dosya pointer'ları kapat
+                for photo in photos:
+                    photo.file.close()
+                    
+
     def video_generator(self):
         """ Receives frames from the queue and sends them with StreamingResponse """
         while True:
@@ -112,3 +165,4 @@ class WebApp:
     def mount_static_files(self):
         # Mount operation for static files
         self.app.mount("/static", StaticFiles(directory="app/web_interface/static"), name="static")
+
