@@ -4,10 +4,12 @@ import torch
 from multiprocessing import Process, Queue, set_start_method, Value, Manager
 import uvicorn
 from time import sleep
+from pathlib import Path
 
 from app.face_detection.scrfd.face_detector import Face_Detector
 from app.face_tracking.byte_tracker import BYTETracker
 from app.face_recognition.arcface.recognize import Face_Recognize
+from app.face_recognition.arcface.update_database import UpdateDatabase
 from app.config import Config
 from app.fps import Fps
 from app.utils import Draw
@@ -57,7 +59,7 @@ def person_detect_tracking(frame_queue: Queue, detection_queue: Queue, logger_co
 
 
 def face_detect_recognize_count(detection_queue: Queue, processed_frame_queue:Queue, log_queue:Queue, show:bool,
-                                logger_config:dict, face_detector_config:dict, face_recognizer_config:dict, person_counter_config:dict):
+                                logger_config:dict, face_detector_config:dict, face_recognizer_config:dict, person_counter_config:dict, update_database_config:dict):
     
     """
     This function performs face detection, recognition, and people counting.
@@ -69,13 +71,20 @@ def face_detect_recognize_count(detection_queue: Queue, processed_frame_queue:Qu
         face_detector_config (dict): Configuration for face detection model.
         face_recognizer_config (dict): Configuration for face recognition model.
         person_counter_config (dict): Configuration for person counting system.
+        update_database_config (dict): Configuration for person adding and deleting.
     """
     logger           =    Logger(             **logger_config)
     face_recognizer  =    Face_Recognize(     **face_recognizer_config,         logger=logger)
     face_detector    =    Face_Detector(      **face_detector_config,           logger=logger)
     person_counter   =    ObjectCounter(      **person_counter_config,          logger=logger, log_queue=log_queue)
     plot_object      =    Draw(                                                 logger=logger)
+    update_database  =    UpdateDatabase(     **update_database_config,         logger=logger)
 
+    folder_path = Path(update_database_config["add_persons_dir"])
+    if any(item.is_dir() for item in folder_path.iterdir()):
+        update_database.add_persons(detector=face_detector)
+        #TODO A request will be sent to the user add endpoint.
+        
     while True:
         try:
             if show:
@@ -122,7 +131,8 @@ def start_server(video_queue, log_queue, play_flag, shared_video_data, web_inter
     
     # We start the FastAPI web application and transfer the queues
     logger  = Logger(**logger_config)
-    web_app = WebApp(video_queue=video_queue, log_queue=log_queue, play_flag=play_flag, shared_video_data=shared_video_data, logger=logger)
+    base_dir = Path(web_interface_config["add_persons_dir"])
+    web_app = WebApp(video_queue=video_queue, log_queue=log_queue, play_flag=play_flag, shared_video_data=shared_video_data, base_dir=base_dir, logger=logger)
     uvicorn.run(app=web_app.app, host=web_interface_config["host"], port=web_interface_config["port"])
 
 def main(args):
@@ -158,6 +168,7 @@ def main(args):
     face_recognizer_config  = configs["recognition"]
     person_counter_config   = configs["person_counter"]
     web_interface_config    = configs["web_interface"]
+    update_database_config  = configs["UpdateDatabase"]
 
     logger = Logger(**configs["logger"])
     logger.debug('Application started')
@@ -199,7 +210,8 @@ def main(args):
                                                                             logger_config,
                                                                             face_detector_config,
                                                                             face_recognizer_config,
-                                                                            person_counter_config), daemon=True)
+                                                                            person_counter_config,
+                                                                            update_database_config), daemon=True)
     
     detection_process.start()
     recognition_process.start()

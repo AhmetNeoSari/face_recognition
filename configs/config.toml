@@ -61,3 +61,12 @@ is_activate = true
 [web_interface]
 host = "0.0.0.0"
 port = 8080
+add_persons_dir = "app/face_recognition/arcface/datasets/new_persons"
+
+[UpdateDatabase]
+backup_dir = "app/face_recognition/arcface/datasets/backup"
+add_persons_dir = "app/face_recognition/arcface/datasets/new_persons"
+faces_save_dir  = "app/face_recognition/arcface/datasets/data"
+features_path = "app/face_recognition/arcface/datasets/face_features/feature"
+recognizer_model_name = "r100"
+recognizer_model_path = "app/face_recognition/arcface/weights/arcface_r100.pth"

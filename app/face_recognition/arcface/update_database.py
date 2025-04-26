@@ -11,6 +11,9 @@ from dataclasses import dataclass
 from typing import Any, List, Tuple
 from collections import Counter
 
+if not __name__ == "__main__":
+    from .recognizer_utils import iresnet_inference
+
 
 @dataclass
 class UpdateDatabase:
@@ -194,9 +197,7 @@ class UpdateDatabase:
             os.makedirs(person_face_path, exist_ok=True)
 
             # Detect and save faces
-            print("aaaa")
             images_name, images_emb = self.detect_and_save_faces(person_image_path, person_face_path)
-            print("bbbb")
             all_images_name = np.concatenate((all_images_name, images_name))
             all_images_emb = np.vstack((all_images_emb, images_emb))
 
@@ -366,14 +367,14 @@ class UpdateDatabase:
 
 if __name__ == "__main__":
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(current_dir)
-    root_dir = os.path.dirname(parent_dir)
-    sys.path.append(root_dir)
-    sys.path.append(current_dir)
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    # parent_dir = os.path.dirname(current_dir)
+    # root_dir = os.path.dirname(parent_dir)
+    # sys.path.append(root_dir)
+    # sys.path.append(current_dir)
 
-    from face_detection.scrfd.face_detector import Face_Detector
-    from face_recognition.arcface.recognizer_utils import iresnet_inference
+    # from face_detection.scrfd.face_detector import Face_Detector
+    # from face_recognition.arcface.recognizer_utils import iresnet_inference
     
     class Custom_logger:
         def error(self, message: str):

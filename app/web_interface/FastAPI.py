@@ -14,14 +14,13 @@ import os
 from typing import Any
 import shutil
 
-BASE_DIR = Path("app/face_recognition/arcface/datasets/new_persons")
-
 @dataclass
 class WebApp:
     video_queue: Queue
     log_queue: Queue
     play_flag: Value
     shared_video_data: Manager  # Variable for video path
+    base_dir : Path
     logger : Any
     app: FastAPI = field(default_factory=FastAPI, init=False)
 
@@ -108,19 +107,19 @@ class WebApp:
             photos: list[UploadFile] = File(...)
         ):
             try:
-                # Dizin ismini oluştur
+                # Create directory name
                 dir_name = f"{name.strip().lower()}_{surname.strip().lower()}"
-                user_dir = BASE_DIR / dir_name
+                user_dir = self.base_dir / dir_name
                 
-                # Dizin oluştur
+                # Create directory
                 os.makedirs(user_dir, exist_ok=True)
                 
-                # Fotoğrafları kaydet
+                # Save photos
                 saved_files = []
                 for photo in photos:
                     file_path = user_dir / photo.filename
                     
-                    # Dosyayı senkron olarak kaydet
+                    # Save file as synchronous
                     with open(file_path, "wb") as buffer:
                         shutil.copyfileobj(photo.file, buffer)
                     
