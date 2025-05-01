@@ -92,3 +92,26 @@ h1 {
         height: 150px; /* Make the log screen smaller on small screens */
     }
 }
+
+#canvas-container {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+}
+
+#drawing-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#draw-line-btn {
+    margin-top: 10px;
+    background-color: #007bff;
+}
+
+#draw-line-btn:hover {
+    background-color: #0056b3;
+}

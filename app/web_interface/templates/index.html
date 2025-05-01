@@ -19,12 +19,19 @@
         <img id="video-frame" src="/video-stream" />
     </div>
 
+    <div class="screen" id="canvas-container" style="position: relative;">
+        <img id="video-frame" src="/video-stream" />
+        <canvas id="drawing-canvas" 
+                style="position: absolute; left: 0; top: 0; pointer-events: none;"></canvas>
+    </div>
+
     <!-- A div wrapping the buttons -->
     <div class="button-container">
         <button class="btn" id="play-button" onclick="startVideo()">Videoyu Oynat</button>
         <button class="btn" id="video-path-button" onclick="showVideoPathInput()">Video Yolu Gir</button>
         <button class="btn" id="rtsp-button" onclick="showRTSPInput()">RTSP'yi Gir</button>
         <button class="btn" id="camera-button" onclick="showCameraInput()">Kamerayı Seç</button>
+        <button class="btn" id="draw-line-btn" onclick="toggleDrawingMode()">Çizgi Seç</button>
     </div>
 
     <!-- Tile for video path input (initially hidden) -->
@@ -137,6 +144,71 @@
             newLog.textContent = event.data;  // Receive the incoming log message
             logScreen.appendChild(newLog);  // Add to log screen
         };
+
+        let isDrawing = false;
+        let startPoint = null;
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function toggleDrawingMode() {
+            isDrawing = !isDrawing;
+            canvas.style.pointerEvents = isDrawing ? 'auto' : 'none';
+            document.getElementById('draw-line-btn').textContent = 
+                isDrawing ? 'Çizimi Bitir (Q)' : 'Çizgi Seç';
+        }
+
+        function updateCanvasSize() {
+            const videoFrame = document.getElementById('video-frame');
+            canvas.width = videoFrame.offsetWidth;
+            canvas.height = videoFrame.offsetHeight;
+        }
+
+        // Handle drawing events
+        canvas.addEventListener('mousedown', (e) => {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            startPoint = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        });
+
+        canvas.addEventListener('mouseup', async (e) => {
+            if (!isDrawing || !startPoint) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const videoFrame = document.getElementById('video-frame');
+            
+            // Calculate scaling factors
+            const scaleX = videoFrame.naturalWidth / videoFrame.offsetWidth;
+            const scaleY = videoFrame.naturalHeight / videoFrame.offsetHeight;
+
+            const endPoint = {
+                x: Math.round((e.clientX - rect.left) * scaleX),
+                y: Math.round((e.clientY - rect.top) * scaleY)
+            };
+
+            // Send coordinates to backend
+            await fetch('/set-line', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    start: {
+                        x: Math.round(startPoint.x * scaleX),
+                        y: Math.round(startPoint.y * scaleY)
+                    },
+                    end: endPoint
+                })
+            });
+
+            // Clear previous drawings
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            toggleDrawingMode();
+        });
+
+        // Update canvas size when window resizes
+        new ResizeObserver(updateCanvasSize).observe(canvas);
+
     </script>
 </body>
 </html>

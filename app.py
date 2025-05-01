@@ -154,7 +154,6 @@ def main(args):
     manager = Manager()
     shared_video_data = manager.dict()  # Shared video path and other data
     shared_video_data['video_path'] = ""
-
     # We create play_flag with Ctypes
     play_flag = Value('i', 0)
     
@@ -189,13 +188,29 @@ def main(args):
     fps_object       =    Fps()
 
     streamer.initialize()
-    if person_counter_config["is_activate"]:
-        frame = next(streamer.read_frame())
-        line_selector = LineSelector()
-        line_start, line_end = line_selector.select_line(frame)
-        person_counter_config['line_start'] = line_start
-        person_counter_config['line_end'] = line_end
+    if person_counter_config["is_activate"]: # analyze area
+        # Send initial frames to initialize video stream
+        for _ in range(5):
+            try:
+                frame = next(streamer.read_frame())
+                processed_frame_queue.put(frame)
+            except StopIteration:
+                break
 
+        # Wait for line coordinates from web interface
+        logger.info("Waiting for line selection from web interface...")
+        while True:
+            if 'line_start' in shared_video_data and 'line_end' in shared_video_data:
+                line_start = shared_video_data['line_start']
+                line_end = shared_video_data['line_end']
+                if line_start != (0, 0) and line_end != (0, 0):
+                    person_counter_config['line_start'] = line_start
+                    person_counter_config['line_end'] = line_end
+                    logger.info(f"Counting line set: {line_start} -> {line_end}")
+                    break
+            sleep(0.1)
+
+        
 
     detection_process = Process(target=person_detect_tracking, args=(frame_queue, 
                                                                     detection_queue,

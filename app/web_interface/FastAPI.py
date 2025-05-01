@@ -49,7 +49,16 @@ class WebApp:
             html_content = Path("app/web_interface/templates/user_register.html").read_text()
             return HTMLResponse(content=html_content)
 
-
+        @self.app.post("/set-line")
+        async def set_counting_line(start: dict, end: dict):
+            self.shared_video_data['line_start'] = (start["x"], start["y"])
+            self.shared_video_data['line_end'] = (end["x"], end["y"])
+            self.logger.debug(f"Line coordinates received: {start} -> {end}")
+            return JSONResponse(content={
+                "message": "Line coordinates updated",
+                "start": self.shared_video_data['line_start'],
+                "end": self.shared_video_data['line_end']
+            })
 
         # For video streaming
         @self.app.get("/video-stream")
