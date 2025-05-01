@@ -144,11 +144,12 @@ def main(args):
     """
     # Set the multiprocessing start method to 'spawn' for CUDA
     set_start_method('spawn', force=True)
+    log_manager = Manager()
 
     frame_queue             = Queue(maxsize=1)
     detection_queue         = Queue(maxsize=1)
     processed_frame_queue   = Queue(maxsize=1)
-    log_queue               = Queue(maxsize=10)
+    log_queue               = log_manager.Queue(maxsize=50)
 
     # We create a shared data structure with Manager
     manager = Manager()

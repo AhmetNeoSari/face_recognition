@@ -50,14 +50,13 @@ class WebApp:
             return HTMLResponse(content=html_content)
 
         @self.app.post("/set-line")
-        async def set_counting_line(start: dict, end: dict):
-            self.shared_video_data['line_start'] = (start["x"], start["y"])
-            self.shared_video_data['line_end'] = (end["x"], end["y"])
-            self.logger.debug(f"Line coordinates received: {start} -> {end}")
+        async def set_counting_line(line: dict):
+            self.shared_video_data['line_start'] = (line["start"]["x"], line["start"]["y"])
+            self.shared_video_data['line_end'] = (line["end"]["x"], line["end"]["y"])
+            self.logger.debug(f"Line coordinates updated: {self.shared_video_data['line_start']} to {self.shared_video_data['line_end']}")
             return JSONResponse(content={
                 "message": "Line coordinates updated",
-                "start": self.shared_video_data['line_start'],
-                "end": self.shared_video_data['line_end']
+                "line": self.shared_video_data['line_start'] + self.shared_video_data['line_end']
             })
 
         # For video streaming
@@ -162,13 +161,16 @@ class WebApp:
                     b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
     def log_generator(self):
-        """ Kuyruktan log mesajlarını alır ve StreamingResponse ile gönderir """
+        """Send log messages from queue to client"""
         while True:
-            if not self.log_queue.empty():
-                log_message = self.log_queue.get()
-                yield f"data: {log_message}\n\n"
-            else:
-                time.sleep(0.3)
+            try:
+                while not self.log_queue.empty():
+                    log_message = self.log_queue.get_nowait()
+                    yield f"data: {log_message}\n\n"
+                time.sleep(0.1)
+            except Exception as e:
+                self.logger.error(f"Log generator error: {str(e)}")
+                time.sleep(0.5)
 
     def mount_static_files(self):
         # Mount operation for static files

@@ -15,15 +15,17 @@
     <h1>Hoşgeldiniz!</h1>
     
     <!-- Video playback screen -->
-    <div class="screen" id="video-screen">
-        <img id="video-frame" src="/video-stream" />
-    </div>
-
-    <div class="screen" id="canvas-container" style="position: relative;">
+    <div class="screen" id="video-screen" style="position: relative;">
         <img id="video-frame" src="/video-stream" />
         <canvas id="drawing-canvas" 
                 style="position: absolute; left: 0; top: 0; pointer-events: none;"></canvas>
     </div>
+
+    <!-- <div class="screen" id="canvas-container" style="position: relative;">
+        <img id="video-frame" src="/video-stream" />
+        <canvas id="drawing-canvas" 
+                style="position: absolute; left: 0; top: 0; pointer-events: none;"></canvas>
+    </div> -->
 
     <!-- A div wrapping the buttons -->
     <div class="button-container">
@@ -31,7 +33,7 @@
         <button class="btn" id="video-path-button" onclick="showVideoPathInput()">Video Yolu Gir</button>
         <button class="btn" id="rtsp-button" onclick="showRTSPInput()">RTSP'yi Gir</button>
         <button class="btn" id="camera-button" onclick="showCameraInput()">Kamerayı Seç</button>
-        <button class="btn" id="draw-line-btn" onclick="toggleDrawingMode()">Çizgi Seç</button>
+        <button class="btn" id="draw-line-btn" onclick="toggleDrawing()">Sayac Hattı Çiz</button>
     </div>
 
     <!-- Tile for video path input (initially hidden) -->
@@ -56,8 +58,10 @@
     </div>
 
     <!-- log-screen -->
-    <div class="log-screen" id="log-screen"></div>
-
+    <div class="log-screen" id="log-screen">
+        <div id="log-content"></div>
+    </div>
+    
     <!-- JavaScript code -->
     <script>
         function startVideo() {
@@ -137,30 +141,48 @@
         }
 
         // Receiving log messages with EventSource
-        var logSource = new EventSource("/log-stream");
+        const logContent = document.getElementById('log-content');
+        const logScreen = document.getElementById('log-screen');
+        
+        const logSource = new EventSource("/log-stream");
         logSource.onmessage = function(event) {
-            var logScreen = document.getElementById('log-screen');
-            var newLog = document.createElement('p');
-            newLog.textContent = event.data;  // Receive the incoming log message
-            logScreen.appendChild(newLog);  // Add to log screen
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = event.data;
+            
+            // Auto-scroll to bottom
+            logContent.appendChild(logEntry);
+            logScreen.scrollTop = logScreen.scrollHeight;
         };
-
         let isDrawing = false;
         let startPoint = null;
+        let currentLine = null;
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
 
-        function toggleDrawingMode() {
+        function toggleDrawing() {
             isDrawing = !isDrawing;
             canvas.style.pointerEvents = isDrawing ? 'auto' : 'none';
             document.getElementById('draw-line-btn').textContent = 
-                isDrawing ? 'Çizimi Bitir (Q)' : 'Çizgi Seç';
+                isDrawing ? 'Çizimi Bitir' : 'Sayac Hattı Çiz';
+            if (!isDrawing) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
         function updateCanvasSize() {
             const videoFrame = document.getElementById('video-frame');
             canvas.width = videoFrame.offsetWidth;
             canvas.height = videoFrame.offsetHeight;
+            drawPersistentLine();
+        }
+
+        function drawPersistentLine() {
+            if (!currentLine) return;
+            ctx.beginPath();
+            ctx.moveTo(currentLine.start.x, currentLine.start.y);
+            ctx.lineTo(currentLine.end.x, currentLine.end.y);
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
 
         // Handle drawing events
@@ -171,6 +193,21 @@
                 x: e.clientX - rect.left,
                 y: e.clientY - rect.top
             };
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing || !startPoint) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw temporary line
+            ctx.beginPath();
+            ctx.moveTo(startPoint.x, startPoint.y);
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         });
 
         canvas.addEventListener('mouseup', async (e) => {
@@ -188,23 +225,35 @@
                 y: Math.round((e.clientY - rect.top) * scaleY)
             };
 
-            // Send coordinates to backend
+            // Store scaled coordinates
+            currentLine = {
+                start: {
+                    x: Math.round(startPoint.x * scaleX),
+                    y: Math.round(startPoint.y * scaleY)
+                },
+                end: endPoint
+            };
+
+            // Send to backend
             await fetch('/set-line', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    start: {
-                        x: Math.round(startPoint.x * scaleX),
-                        y: Math.round(startPoint.y * scaleY)
-                    },
-                    end: endPoint
-                })
+                body: JSON.stringify(currentLine)
             });
 
-            // Clear previous drawings
+            // Draw persistent line
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            toggleDrawingMode();
+            drawPersistentLine();
+            toggleDrawing();
         });
+
+        // Initialize and handle resizing
+        window.addEventListener('load', () => {
+            updateCanvasSize();
+            new ResizeObserver(updateCanvasSize).observe(canvas);
+        });
+
+
 
         // Update canvas size when window resizes
         new ResizeObserver(updateCanvasSize).observe(canvas);
