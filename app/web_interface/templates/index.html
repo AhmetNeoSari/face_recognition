@@ -33,7 +33,9 @@
         <button class="btn" id="video-path-button" onclick="showVideoPathInput()">Video Yolu Gir</button>
         <button class="btn" id="rtsp-button" onclick="showRTSPInput()">RTSP'yi Gir</button>
         <button class="btn" id="camera-button" onclick="showCameraInput()">Kamerayı Seç</button>
-        <button class="btn" id="draw-line-btn" onclick="toggleDrawing()">Sayac Hattı Çiz</button>
+        <!-- <button class="btn" id="draw-line-btn" onclick="toggleDrawing()">Sayac Hattı Çiz</button> -->
+        <button class="btn" id="draw-line-btn" onclick="toggleDrawing()" disabled>Sayac Hattı Çiz</button>
+
     </div>
 
     <!-- Tile for video path input (initially hidden) -->
@@ -56,6 +58,13 @@
         <input type="number" id="camera-index" placeholder="Kamera indeksi (örn: 0)" />
         <button class="btn" onclick="submitCameraIndex()">Kamerayı Seç</button>
     </div>
+
+    <div id="event-id-container" style="margin-top: 20px;">
+        <label for="event-id">Etkinlik ID:</label>
+        <input type="text" id="event-id" placeholder="Etkinlik ID girin" />
+        <button class="btn" onclick="submitEventID()">Gönder</button>
+    </div>
+
 
     <!-- log-screen -->
     <div class="log-screen" id="log-screen">
@@ -133,6 +142,33 @@
             .then(data => console.log(data.message));
         }
 
+        function submitEventID() {
+            const eventID = document.getElementById("event-id").value.trim();
+            
+            if (!eventID) {
+                alert("Lütfen bir Etkinlik ID girin.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("event_id", eventID);
+
+            fetch('/set-event-id', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Etkinlik ID gönderildi:", data);
+                alert("Etkinlik ID başarıyla kaydedildi!");
+                document.getElementById('draw-line-btn').disabled = false;  // Butonu aktif et
+            })
+            .catch(error => {
+                console.error("Gönderim hatası:", error);
+            });
+        }
+
+
         // Disable other buttons
         function disableOtherButtons() {
             document.getElementById('video-path-button').disabled = true;
@@ -149,11 +185,18 @@
             const logEntry = document.createElement('div');
             logEntry.className = 'log-entry';
             logEntry.textContent = event.data;
-            
+
             // Auto-scroll to bottom
             logContent.appendChild(logEntry);
             logScreen.scrollTop = logScreen.scrollHeight;
         };
+
+        logSource.onerror = function(err) {
+            console.error("SSE connection error:", err);
+            logSource.close(); // close connection
+        };
+
+
         let isDrawing = false;
         let startPoint = null;
         let currentLine = null;
@@ -161,10 +204,18 @@
         const ctx = canvas.getContext('2d');
 
         function toggleDrawing() {
+            const eventID = document.getElementById("event-id").value.trim();
+
+            if (!eventID) {
+                alert("Please enter Event ID first.");
+                return; // Çık, çizime geçme
+            }
+
             isDrawing = !isDrawing;
             canvas.style.pointerEvents = isDrawing ? 'auto' : 'none';
             document.getElementById('draw-line-btn').textContent = 
-                isDrawing ? 'Çizimi Bitir' : 'Sayac Hattı Çiz';
+                isDrawing ? 'Çizimi Bitir' : 'Sayaç Hattı Çiz';
+
             if (!isDrawing) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
