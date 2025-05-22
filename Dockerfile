@@ -13,8 +13,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # 2. System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget git libgl1 libglib2.0-0 && \
-    rm -rf /var/lib/apt/lists/*
+    wget git libgl1 libglib2.0-0 fonts-dejavu fontconfig && \
+    rm -rf /var/lib/apt/lists/* \
+    && fc-cache -fv
 
 # 3. Miniconda installation
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py39_23.11.0-2-Linux-x86_64.sh -O miniconda.sh && \
