@@ -10,7 +10,12 @@ class Draw():
         self.text_scale = 2
         self.text_thickness = 2
         self.line_thickness = 3
-        self.font = ImageFont.truetype("DejaVuSans.ttf", 30)
+        # self.font = ImageFont.truetype("DejaVuSans.ttf", 30)
+        try:
+            self.font = ImageFont.truetype("DejaVuSans.ttf", 30)
+        except IOError:
+            self.font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 30)
+            self.logger.info("Using system DejaVu font")
         self.text_color = (0, 0, 255)
 
 
