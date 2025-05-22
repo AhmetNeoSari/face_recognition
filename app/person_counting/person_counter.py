@@ -33,6 +33,10 @@ class ObjectCounter:
         self.bounding_box_annotator = sv.BoundingBoxAnnotator(thickness=4)
         self.label_annotator        = sv.LabelAnnotator(text_thickness=4, text_scale=2)
         self.trace_annotator        = sv.TraceAnnotator(thickness=4)
+        with open("data/event_id.txt", "r", encoding="utf-8") as f:
+            self.event_id = f.read().strip()
+
+        print("person_counter event_id: ",self.event_id)
         self.logger.debug("ObjectCounter class initialized")
 
     def count(self, frame: np.ndarray, results, tracker_results, names: dict):
@@ -75,8 +79,8 @@ class ObjectCounter:
                         del self.unrecognized_entries[tracker_id]
                         self.logger.info(f"{current_name} went in.")
                         tmp = f"{current_name} went in."
+                        self.send_person_entry(current_name)
                         self.log_queue.put(tmp)
-                        response = requests.post("http://backend:8080/user-detected" , {"name" : current_name, "is_known" : True}, )
                         continue  # No need to wait 5 seconds as the person is recognized
                 else:
                     current_name = previous_name
@@ -92,12 +96,13 @@ class ObjectCounter:
                     if tracker_id in self.unrecognized_entries:
                         self.unrecognized_entries[tracker_id].cancel()
                     
-                    timer = threading.Timer(3.0, self._log_unrecognized, [tracker_id, current_name])
+                    timer = threading.Timer(5.0, self._log_unrecognized, [tracker_id, current_name])
                     self.unrecognized_entries[tracker_id] = timer
                     timer.start()
                 else:
                     self.logger.info(f"{current_name} went in.")
                     tmp = f"{current_name} went in."
+                    self.send_person_entry(current_name)
                     self.log_queue.put(tmp)
 
             elif cross_out:
@@ -107,6 +112,24 @@ class ObjectCounter:
                     self.logger.info(f"{current_name} went out.")
                     tmp = f"{current_name} went out."
                     self.log_queue.put(tmp)
+
+    def send_person_entry(self, name: str):
+        try:
+            response = requests.post(
+                url="http://localhost:5285/Transaction/CreateTransaction",
+                json={
+                    "activityId": self.event_id,
+                    "name": name
+                },
+                timeout=2
+            )
+            if response.status_code == 200:
+                self.logger.info(f"POST başarılı: {name} için event {self.event_id}")
+            else:
+                self.logger.warning(f"POST başarısız (status {response.status_code}): {response.text}")
+        except Exception as e:
+            self.logger.error(f"POST isteği hatası: {str(e)}")
+            self.log_queue.put(f"POST isteği hatası: {str(e)}")
 
     def _log_unrecognized(self, tracker_id, current_name):
         if tracker_id in self.tracker_id_to_name and self.tracker_id_to_name[tracker_id] == "UN_KNOWN":

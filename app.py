@@ -19,6 +19,7 @@ from app.human_detection.person_detection import PersonDetection
 from app.person_counting.person_counter import ObjectCounter
 from app.person_counting.utils import LineSelector
 from app.web_interface.FastAPI import WebApp
+# from app.web_interface.person_entry_service import PersonEntryAPI #FOR TEST
 
 def person_detect_tracking(frame_queue: Queue, detection_queue: Queue, logger_config:dict, person_detector_config:dict, person_tracker_config:dict):
     """
@@ -135,6 +136,11 @@ def start_server(video_queue, log_queue, play_flag, shared_video_data, web_inter
     web_app = WebApp(video_queue=video_queue, log_queue=log_queue, play_flag=play_flag, shared_video_data=shared_video_data, base_dir=base_dir, logger=logger)
     uvicorn.run(app=web_app.app, host=web_interface_config["host"], port=web_interface_config["port"])
 
+# def start_person_entry_api():
+##      THIS FUNCTION WILL NOT RUN, FOR TEST
+#     service = PersonEntryAPI()
+#     service.run()
+
 def main(args):
     """
     Main function that sets up the multiprocessing system and starts the detection and recognition processes.
@@ -229,6 +235,10 @@ def main(args):
                                                                             person_counter_config,
                                                                             update_database_config), daemon=True)
     
+    ## THIS TWO LINE FOR TEST DON'T RUN
+    # person_entry_process = Process(target=start_person_entry_api, daemon=True)
+    # person_entry_process.start()
+
     detection_process.start()
     recognition_process.start()
     

@@ -107,6 +107,30 @@ class WebApp:
                 return {"message": f"Camera {camera_index} selected", "camera_index": camera_index}
             except ValueError:
                 return {"message": "No valid camera index found", "error": True}
+            
+
+        @self.app.post("/set-event-id")
+        def set_event_id(event_id: str = Form(...)):
+            if not event_id.strip():
+                raise HTTPException(status_code=400, detail="Etkinlik ID boş olamaz.")
+
+            event_id = event_id.strip()
+
+            try:
+                # Dosyaya yazma işlemi (örnek: data/event_id.txt)
+                save_path = Path("data/event_id.txt")
+                save_path.parent.mkdir(parents=True, exist_ok=True)  # Klasörü oluştur
+
+                with open(save_path, "w", encoding="utf-8") as f:
+                    f.write(event_id)
+
+                self.logger.info(f"Etkinlik ID dosyaya kaydedildi: {event_id}")
+                return {"message": "Etkinlik ID dosyaya kaydedildi", "event_id": event_id}
+
+            except Exception as e:
+                self.logger.error(f"Etkinlik ID dosyaya yazılamadı: {str(e)}")
+                raise HTTPException(status_code=500, detail="Dosyaya yazma hatası.")
+
 
         @self.app.post("/submit")
         def create_upload(
@@ -162,15 +186,21 @@ class WebApp:
 
     def log_generator(self):
         """Send log messages from queue to client"""
-        while True:
-            try:
+        try:
+            while True:
                 while not self.log_queue.empty():
                     log_message = self.log_queue.get_nowait()
+                    # print("log_message: ", log_message)
                     yield f"data: {log_message}\n\n"
                 time.sleep(0.1)
-            except Exception as e:
-                self.logger.error(f"Log generator error: {str(e)}")
-                time.sleep(0.5)
+        except GeneratorExit:
+            self.logger.info("Client disconnected from log stream (GeneratorExit)")
+        except BrokenPipeError:
+            self.logger.warning("Broken pipe in log stream (client closed connection)")
+        except Exception as e:
+            self.logger.error(f"Log generator error: {str(e)}")
+            time.sleep(0.5)
+
 
     def mount_static_files(self):
         # Mount operation for static files
